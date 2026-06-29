@@ -508,7 +508,7 @@ class AgriFinHandler(BaseHTTPRequestHandler):
 
 
 def run_server(host: str = "127.0.0.1", port: int = 5000) -> None:
-    server = ThreadingHTTPServer((host, port), AgriFinHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), AgriFinHandler)
     print(f"AgriFin AI running at http://{host}:{port}")
     print("Press Ctrl+C to stop.")
     server.serve_forever()
