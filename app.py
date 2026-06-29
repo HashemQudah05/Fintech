@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 from typing import Any, Dict, List
-
+import os
 import joblib
 import numpy as np
 import pandas as pd
@@ -507,12 +507,16 @@ class AgriFinHandler(BaseHTTPRequestHandler):
             self._send_json({"error": str(exc)}, status=400)
 
 
-def run_server(host: str = "127.0.0.1", port: int = 5000) -> None:
-    server = ThreadingHTTPServer(("0.0.0.0", port), AgriFinHandler)
-    print(f"AgriFin AI running at http://{host}:{port}")
-    print("Press Ctrl+C to stop.")
+def run_server():
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", "10000"))
+
+    server = ThreadingHTTPServer((host, port), AgriFinHandler)
+    print(f"AgriFin AI running on {host}:{port}", flush=True)
     server.serve_forever()
 
 
 if __name__ == "__main__":
     run_server()
+
+
