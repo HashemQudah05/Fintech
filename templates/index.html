@@ -151,11 +151,11 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
 }
 .chat-quick{padding:0 14px 10px;background:var(--bg)}
 .chat-quick-label{font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-bottom:7px}
-.chat-chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}
+.chat-chips{display:flex;flex-wrap:wrap;gap:7px;padding-bottom:3px}
 .chat-chip{
   flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
   border-radius:999px;padding:7px 10px;font-size:11px;cursor:pointer;
-  white-space:nowrap;
+  white-space:normal;
 }
 .chat-chip:hover{border-color:var(--gold);background:var(--brand-soft)}
 .chat-input-wrap{
@@ -311,7 +311,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
   <div class="chat-body" id="chatBody" role="log" aria-live="polite">
     <div class="chat-message assistant">
       <div class="chat-bubble" id="chatWelcome">
-        Hello! Ask me about any field, calculation, or result in AgriFin AI.
+        Hello! Ask me about any AgriFin field, calculation, or current result.
       </div>
     </div>
   </div>
@@ -330,7 +330,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
       placeholder="Ask about a field or result…" aria-label="Chat message"></textarea>
     <button class="chat-send" id="chatSend" type="submit" aria-label="Send message">➤</button>
   </form>
-  <div class="chat-note" id="chatNote">Assistant interface ready — API connection is the next step.</div>
+  <div class="chat-note" id="chatNote">Field and result explanations are available.</div>
 </aside>
 
 <script>
@@ -354,12 +354,12 @@ const DATA={
 const T={
   chatTitle:{en:'AgriFin Assistant',ar:'مساعد AgriFin'},
   chatStatus:{en:'Ready to help',ar:'جاهز للمساعدة'},
-  chatWelcome:{en:'Hello! Ask me about any field, calculation, or result in AgriFin AI.',ar:'مرحبًا! اسألني عن أي حقل أو عملية حسابية أو نتيجة في AgriFin AI.'},
+  chatWelcome:{en:'Hello! Ask me about any AgriFin field, calculation, or current result.',ar:'مرحبًا! اسألني عن أي حقل أو عملية حسابية أو نتيجة حالية في AgriFin AI.'},
   chatQuickLabel:{en:'Suggested questions',ar:'أسئلة مقترحة'},
   chatChipRevenue:{en:'What is expected annual revenue?',ar:'ما المقصود بالإيراد السنوي المتوقع؟'},
   chatChipEligible:{en:'How is eligible financing calculated?',ar:'كيف يُحسب الحد الأعلى للتمويل المؤهل؟'},
   chatChipRisk:{en:'What does the risk score mean?',ar:'ماذا تعني درجة المخاطر؟'},
-  chatNote:{en:'Assistant interface ready — API connection is the next step.',ar:'واجهة المساعد جاهزة — ربط الـ API هو الخطوة التالية.'},
+  chatNote:{en:'Field and result explanations are available.',ar:'شرح الحقول والنتائج متاح الآن.'},
 
   brandSub:{en:'Agricultural Loan Decision Support',ar:'دعم قرارات التمويل الزراعي'},
   assessmentNav:{en:'Loan Assessment',ar:'تقييم طلب التمويل'},dashboardLink:{en:'Analytics Dashboard ↗',ar:'لوحة التحليلات ↗'},dashboardTitle:{en:'Opens in a new tab',ar:'تفتح في تبويب جديد'},
@@ -408,10 +408,231 @@ function appendChatMessage(text,role='assistant'){
   $('chatBody').appendChild(row);
   $('chatBody').scrollTop=$('chatBody').scrollHeight;
 }
-function chatbotUiReply(){
+function normalizeChatText(value){
+  return String(value||'')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u064B-\u065F\u0670]/g,'')
+    .replace(/[أإآ]/g,'ا')
+    .replace(/ة/g,'ه')
+    .replace(/ى/g,'ي')
+    .replace(/[^\p{L}\p{N}%]+/gu,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function chatMoney(value){
+  const number=Number(value)||0;
+  return LANG==='ar'
+    ?`${number.toLocaleString('ar-JO',{maximumFractionDigits:0})} د.أ`
+    :`JD ${number.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+}
+function currentFieldValue(id){
+  const el=$(id);
+  if(!el)return '';
+  if(el.tagName==='SELECT'){
+    const option=el.options[el.selectedIndex];
+    return option?option.textContent.trim():'';
+  }
+  return String(el.value||'').trim();
+}
+function includesAny(text,phrases){
+  return phrases.some(phrase=>text.includes(normalizeChatText(phrase)));
+}
+function localChatAnswer(question){
+  const q=normalizeChatText(question);
+  const data=LAST_ASSESSMENT||null;
+
+  if(includesAny(q,['مرحبا','اهلا','السلام عليكم','hello','hi','hey'])){
+    return chatText(
+      'Hello! I can explain AgriFin input fields, calculations, and the current risk assessment result.',
+      'أهلًا! أستطيع شرح حقول AgriFin والحسابات ونتيجة تقييم المخاطر الحالية.'
+    );
+  }
+
+  if(includesAny(q,['نوع الري','الري','irrigation type','irrigation'])){
+    const selected=currentFieldValue('irrigationType');
+    return chatText(
+      `Irrigation type means the method used to deliver water to the crop, such as drip, surface, rainfed, or controlled greenhouse irrigation. It affects water efficiency and production risk.${selected?` The current selection is: ${selected}.`:''}`,
+      `نوع الري هو الطريقة المستخدمة لإيصال المياه للمحصول، مثل الري بالتنقيط أو السطحي أو البعلي أو الري المتحكم به داخل البيوت المحمية. يؤثر هذا الحقل في كفاءة استخدام المياه ومخاطر الإنتاج.${selected?` النوع المحدد حاليًا: ${selected}.`:''}`
+    );
+  }
+
+  if(includesAny(q,['الايراد السنوي المتوقع','الايراد المتوقع','الدخل السنوي المتوقع','expected annual revenue','expected revenue'])){
+    const revenue=Number(currentFieldValue('expectedRevenue'))||0;
+    return chatText(
+      `Expected annual revenue is the total sales income the agricultural project is expected to generate during one year. It is not necessarily net profit, because operating costs may still need to be deducted. The system uses it to estimate repayment capacity.${revenue?` The entered value is ${chatMoney(revenue)}.`:''}`,
+      `الإيراد السنوي المتوقع هو إجمالي قيمة المبيعات التي يُتوقع أن يحققها المشروع الزراعي خلال سنة واحدة. وهو ليس بالضرورة صافي الربح؛ لأن تكاليف التشغيل قد تُخصم منه لاحقًا. يستخدمه النظام لتقدير قدرة المشروع على السداد.${revenue?` القيمة المدخلة حاليًا هي ${chatMoney(revenue)}.`:''}`
+    );
+  }
+
+  if(includesAny(q,['الحد الاعلى للتمويل المؤهل','التمويل المؤهل','75','eligible financing','maximum eligible financing'])){
+    if(data){
+      const cost=Number(data.estimated_project_cost_jod)||0;
+      const eligible=Number(data.max_eligible_financing_jod)||0;
+      return chatText(
+        `The maximum eligible financing is 75% of the estimated project cost. For the current application: ${chatMoney(cost)} × 75% = ${chatMoney(eligible)}.`,
+        `الحد الأعلى للتمويل المؤهل يساوي 75% من تكلفة المشروع المقدرة. في الطلب الحالي: ${chatMoney(cost)} × 75% = ${chatMoney(eligible)}.`
+      );
+    }
+    return chatText(
+      'The maximum eligible financing is calculated as 75% of the estimated project cost. Example: if the project cost is JD 2,000, the eligible limit is JD 1,500.',
+      'الحد الأعلى للتمويل المؤهل يُحسب بنسبة 75% من تكلفة المشروع المقدرة. مثال: إذا كانت تكلفة المشروع 2,000 دينار، يكون الحد المؤهل 1,500 دينار.'
+    );
+  }
+
+  if(includesAny(q,['القرض المطلوب','requested loan'])){
+    const requested=Number(currentFieldValue('requestedLoan'))||0;
+    return chatText(
+      `The requested loan is the financing amount the farmer asks the institution to provide. It is compared with the estimated project cost, eligible financing limit, expected revenue, and risk level.${requested?` The entered amount is ${chatMoney(requested)}.`:''}`,
+      `القرض المطلوب هو مبلغ التمويل الذي يطلب المزارع من المؤسسة توفيره. يقارنه النظام مع تكلفة المشروع وحد التمويل المؤهل والإيراد المتوقع ودرجة المخاطر.${requested?` المبلغ المدخل حاليًا هو ${chatMoney(requested)}.`:''}`
+    );
+  }
+
+  if(includesAny(q,['مساحه المزرعه','مساحة المزرعة','الدونم','farm area','dunum'])){
+    const area=Number(currentFieldValue('farmArea'))||0;
+    return chatText(
+      `Farm area is the cultivated or project area measured in dunums. The system uses it with the activity cost per unit to estimate total project cost.${area?` The entered area is ${area} dunums.`:''}`,
+      `مساحة المزرعة هي المساحة المزروعة أو المخصصة للمشروع وتقاس بالدونم. يستخدمها النظام مع تكلفة النشاط لكل دونم أو وحدة لتقدير تكلفة المشروع.${area?` المساحة المدخلة حاليًا هي ${area} دونم.`:''}`
+    );
+  }
+
+  if(includesAny(q,['خبره المزارع','خبرة المزارع','farmer experience','experience'])){
+    const years=Number(currentFieldValue('farmerExperience'))||0;
+    return chatText(
+      `Farmer experience is the number of years the applicant has worked in the same or a closely related agricultural activity. More relevant experience can reduce operational uncertainty.${years?` The entered experience is ${years} years.`:''}`,
+      `خبرة المزارع هي عدد السنوات التي عمل فيها مقدم الطلب في النشاط الزراعي نفسه أو في نشاط قريب منه. الخبرة المرتبطة بالمشروع قد تقلل عدم اليقين التشغيلي.${years?` الخبرة المدخلة حاليًا هي ${years} سنوات.`:''}`
+    );
+  }
+
+  if(includesAny(q,['توفر المياه','المياه','water availability'])){
+    const selected=currentFieldValue('waterAvailability');
+    return chatText(
+      `Water availability describes how reliably the project can access enough water for production. Low availability generally increases production and repayment risk.${selected?` The current selection is: ${selected}.`:''}`,
+      `توفر المياه يعبّر عن مدى قدرة المشروع على الحصول على كمية كافية ومستقرة من المياه للإنتاج. انخفاض توفر المياه يرفع عادةً مخاطر الإنتاج والسداد.${selected?` المستوى المحدد حاليًا: ${selected}.`:''}`
+    );
+  }
+
+  if(includesAny(q,['درجه المخاطر','درجة المخاطر','risk score','risk degree'])){
+    if(data){
+      const score=Number(data.risk_score)||0;
+      return chatText(
+        `The risk score is ${score.toFixed(1).replace('.0','')} out of 100. A lower score means lower estimated risk: below 40 is low risk, 40 to below 70 is medium risk, and 70 or more is high risk. This is decision support, not the final institutional decision.`,
+        `درجة المخاطر الحالية هي ${score.toFixed(1).replace('.0','')} من 100. كلما انخفضت الدرجة كانت المخاطر المقدرة أقل: أقل من 40 مخاطر منخفضة، ومن 40 إلى أقل من 70 مخاطر متوسطة، و70 فأعلى مخاطر مرتفعة. النتيجة أداة مساندة وليست القرار المؤسسي النهائي.`
+      );
+    }
+    return chatText(
+      'The risk score ranges from 0 to 100. Below 40 is low risk, 40 to below 70 is medium risk, and 70 or more is high risk.',
+      'درجة المخاطر تتراوح من 0 إلى 100. أقل من 40 مخاطر منخفضة، ومن 40 إلى أقل من 70 مخاطر متوسطة، و70 فأعلى مخاطر مرتفعة.'
+    );
+  }
+
+  if(includesAny(q,['تكلفه المشروع المقدره','تكلفة المشروع المقدرة','estimated project cost','project cost'])){
+    if(data){
+      const cost=Number(data.estimated_project_cost_jod)||0;
+      const unit=Number(data.cost_per_unit_jod)||0;
+      const area=Number(currentFieldValue('farmArea'))||0;
+      return chatText(
+        `The estimated project cost is calculated from the selected activity cost per dunum or unit multiplied by the entered project size. In the current application: ${chatMoney(unit)} × ${area||'the entered units'} = ${chatMoney(cost)}.`,
+        `تكلفة المشروع المقدرة تُحسب من تكلفة النشاط لكل دونم أو وحدة مضروبة في حجم المشروع المدخل. في الطلب الحالي: ${chatMoney(unit)} × ${area||'عدد الوحدات المدخلة'} = ${chatMoney(cost)}.`
+      );
+    }
+    return chatText(
+      'Estimated project cost is based on the selected crop or activity cost per dunum or unit multiplied by the entered project size.',
+      'تكلفة المشروع المقدرة تعتمد على تكلفة المحصول أو النشاط لكل دونم أو وحدة مضروبة في حجم المشروع المدخل.'
+    );
+  }
+
+  if(includesAny(q,['القرض المقترح','التوصيه التمويليه','التوصية التمويلية','recommended loan','suggested loan'])){
+    if(data){
+      const requested=Number(data.requested_loan_jod)||0;
+      const eligible=Number(data.max_eligible_financing_jod)||0;
+      const recommended=Number(data.recommended_loan_jod)||0;
+      const score=Number(data.risk_score)||0;
+      const factor=score<40?'100%':score<70?'90%':'70%';
+      return chatText(
+        `The recommended loan starts from the lower of the requested amount (${chatMoney(requested)}) and the eligible limit (${chatMoney(eligible)}), then applies the ${factor} risk adjustment. The current recommendation is ${chatMoney(recommended)}.`,
+        `يبدأ احتساب القرض المقترح من المبلغ الأقل بين القرض المطلوب (${chatMoney(requested)}) وحد التمويل المؤهل (${chatMoney(eligible)})، ثم يُطبق معامل المخاطر بنسبة ${factor}. التوصية الحالية هي ${chatMoney(recommended)}.`
+      );
+    }
+    return chatText(
+      'The recommended loan uses the lower of the requested amount and the eligible financing limit, then applies a risk adjustment.',
+      'القرض المقترح يعتمد على المبلغ الأقل بين القرض المطلوب وحد التمويل المؤهل، ثم يُطبق عليه معامل المخاطر.'
+    );
+  }
+
+  if(includesAny(q,['نسبه التمويل الزائد','نسبة التمويل الزائد','over financing ratio','overfinancing ratio'])){
+    if(data){
+      const ratio=Number(data.overfinancing_ratio)||0;
+      const requested=Number(data.requested_loan_jod)||0;
+      const eligible=Number(data.max_eligible_financing_jod)||0;
+      return chatText(
+        `The over-financing ratio compares the requested loan with the eligible financing limit: ${chatMoney(requested)} ÷ ${chatMoney(eligible)} = ${ratio.toFixed(2)}×. A value above 1 means the request exceeds the eligible limit.`,
+        `نسبة التمويل الزائد تقارن القرض المطلوب بحد التمويل المؤهل: ${chatMoney(requested)} ÷ ${chatMoney(eligible)} = ${ratio.toFixed(2)}×. إذا كانت النسبة أكبر من 1 فهذا يعني أن الطلب يتجاوز الحد المؤهل.`
+      );
+    }
+    return chatText(
+      'The over-financing ratio equals the requested loan divided by the maximum eligible financing. A value above 1 means the request exceeds the eligible limit.',
+      'نسبة التمويل الزائد تساوي القرض المطلوب مقسومًا على الحد الأعلى للتمويل المؤهل. إذا كانت أكبر من 1 فهذا يعني أن الطلب يتجاوز الحد المؤهل.'
+    );
+  }
+
+  if(includesAny(q,['خطه السداد','خطة السداد','repayment plan','repayment frequency'])){
+    if(data&&data.repayment_plan){
+      return chatText(
+        `The repayment plan describes the proposed payment frequency based on the project type and repayment period. The current plan is: ${data.repayment_plan}.`,
+        `خطة السداد توضح دورية السداد المقترحة وفق نوع المشروع ومدة التمويل. الخطة الحالية هي: ${data.repayment_plan}.`
+      );
+    }
+    return chatText(
+      'The repayment plan describes the proposed repayment frequency, such as monthly, semi-annual, or seasonal after harvest.',
+      'خطة السداد توضح دورية السداد المقترحة، مثل شهري أو نصف سنوي أو موسمي بعد الحصاد.'
+    );
+  }
+
+  if(includesAny(q,['لماذا ظهرت هذه النتيجه','لماذا ظهرت هذه النتيجة','ليش النتيجه','ليش النتيجة','why this result','why did this result'])){
+    if(data&&Array.isArray(data.risk_reasons)&&data.risk_reasons.length){
+      return data.risk_reasons.map(item=>`• ${item.text}`).join('\n');
+    }
+    return chatText(
+      'Run the loan assessment first, then ask me again so I can explain the factors behind the current result.',
+      'نفّذ تقييم الطلب أولًا، ثم اسألني مرة أخرى حتى أشرح العوامل التي أدت إلى النتيجة الحالية.'
+    );
+  }
+
+  if(includesAny(q,['نوع المشروع','project type'])){
+    const selected=currentFieldValue('projectType');
+    return chatText(
+      `Project type identifies the broad agricultural financing category, such as open-field vegetables, greenhouses, livestock, irrigation, machinery, or storage. It helps determine the relevant activity and cost logic.${selected?` The current selection is: ${selected}.`:''}`,
+      `نوع المشروع يحدد الفئة الزراعية العامة للتمويل، مثل الخضار المكشوفة أو البيوت المحمية أو الثروة الحيوانية أو الري أو المعدات أو التخزين. يساعد في تحديد النشاط ومنطق التكلفة المناسب.${selected?` النوع المحدد حاليًا: ${selected}.`:''}`
+    );
+  }
+
+  if(includesAny(q,['المحصول','النشاط','crop','activity'])){
+    const selected=currentFieldValue('cropActivity');
+    return chatText(
+      `Crop or activity specifies the exact production activity being financed. The system uses it to select the estimated cost per dunum or unit.${selected?` The current selection is: ${selected}.`:''}`,
+      `المحصول أو النشاط يحدد النشاط الإنتاجي الدقيق المطلوب تمويله. يستخدمه النظام لاختيار التكلفة التقديرية لكل دونم أو وحدة.${selected?` النشاط المحدد حاليًا: ${selected}.`:''}`
+    );
+  }
+
+  if(includesAny(q,['اول مره','أول مرة','مقترض لاول مره','مقترض لأول مرة','first time borrower'])){
+    return chatText(
+      'First-time borrower indicates whether the applicant has no previous borrowing record with the institution. A limited repayment history may increase uncertainty, but it does not automatically mean rejection.',
+      'المقترض لأول مرة هو مقدم طلب لا يملك سجل اقتراض سابقًا لدى المؤسسة. محدودية سجل السداد قد تزيد عدم اليقين، لكنها لا تعني رفض الطلب تلقائيًا.'
+    );
+  }
+
+  if(includesAny(q,['مده السداد','مدة السداد','repayment period','loan period'])){
+    const years=Number(currentFieldValue('periodYears'))||0;
+    return chatText(
+      `Repayment period is the number of years requested to repay the financing. It helps determine the loan term category and repayment frequency.${years?` The entered period is ${years} years.`:''}`,
+      `مدة السداد هي عدد السنوات المطلوبة لسداد التمويل. يستخدمها النظام لتحديد فئة مدة القرض ودورية السداد.${years?` المدة المدخلة حاليًا هي ${years} سنوات.`:''}`
+    );
+  }
+
   return chatText(
-    'The assistant interface is ready. In the next step, we will connect it to the API so it can explain AgriFin fields and the current assessment result.',
-    'واجهة المساعد جاهزة. في الخطوة التالية سنربطها بالـ API حتى تشرح حقول AgriFin ونتيجة الطلب الحالي.'
+    'I can explain fields such as irrigation type, expected annual revenue, requested loan, farm area, water availability, risk score, estimated cost, eligible financing, recommended loan, over-financing ratio, and repayment plan. Please ask about one of them.',
+    'أستطيع شرح حقول مثل نوع الري، الإيراد السنوي المتوقع، القرض المطلوب، مساحة المزرعة، توفر المياه، درجة المخاطر، تكلفة المشروع، حد التمويل المؤهل، القرض المقترح، نسبة التمويل الزائد، وخطة السداد. اسألني عن أحدها.'
   );
 }
 function submitChatMessage(message){
@@ -419,7 +640,7 @@ function submitChatMessage(message){
   if(!text)return;
   appendChatMessage(text,'user');
   $('chatInput').value='';
-  setTimeout(()=>appendChatMessage(chatbotUiReply(),'assistant'),350);
+  setTimeout(()=>appendChatMessage(localChatAnswer(text),'assistant'),250);
 }
 function refreshChatLanguage(){
   if(!$('chatPanel'))return;
