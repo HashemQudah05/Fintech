@@ -60,7 +60,6 @@ body[dir="rtl"] .hero h2{letter-spacing:0}
 .panel,.result-panel{padding:20px}
 .panel-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:17px}
 .panel-head h3{margin:0;font-size:20px}.panel-head p{margin:5px 0 0;color:var(--ink-soft);font-size:12.5px;line-height:1.55}
-.step{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:900;flex:none}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}
 label{font-size:12px;font-weight:800;color:var(--ink-soft)}
@@ -80,9 +79,9 @@ input:focus,select:focus{border-color:var(--focus);box-shadow:0 0 0 3px color-mi
 .decision h4{font-size:22px;margin:0 0 6px}.decision p{margin:0;color:var(--ink-soft);font-size:12.5px;line-height:1.6}
 .metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
 .metric{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--field)}
-.metric .m-label{font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);font-weight:800;letter-spacing:.4px}.metric .m-value{font-size:18px;font-weight:900;margin-top:5px;overflow-wrap:anywhere}
+.metric .m-label{font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);font-weight:800;letter-spacing:.4px}.metric .m-value{font-size:18px;font-weight:900;margin-top:5px;overflow-wrap:anywhere}.metric .m-desc{font-size:11px;color:var(--ink-soft);line-height:1.45;margin-top:5px}
 body[dir="rtl"] .metric .m-label{letter-spacing:0}
-.decision-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}.decision-item{padding:12px;border-radius:10px;background:var(--brand-soft);border:1px solid var(--line)}.decision-item b{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:5px}.decision-item span{font-size:13px;font-weight:800}
+.decision-kicker{font-size:11px;color:var(--ink-soft);font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px}.decision-amount{font-size:28px!important;color:var(--brand);font-weight:950!important;margin:1px 0 7px!important}.decision-strip{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}.decision-item{padding:12px;border-radius:10px;background:var(--brand-soft);border:1px solid var(--line)}.decision-item b{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:5px}.decision-item span{display:block;font-size:13px;font-weight:800}.decision-item small{display:block;font-size:10.5px;color:var(--ink-soft);line-height:1.45;margin-top:5px}.logic-card{border:1px solid var(--line);border-radius:10px;padding:13px 14px;background:var(--field);margin:4px 0 14px}.logic-card h4{margin:0 0 9px;font-size:15px}.logic-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}.logic-row:last-of-type{border-bottom:0}.logic-row span{color:var(--ink-soft)}.logic-row b{text-align:end}.logic-note{margin:9px 0 0;color:var(--ink-soft);font-size:11px;line-height:1.55}
 .reason-box{border-top:1px solid var(--line);padding-top:14px}.reason-box h4{margin:0 0 10px;font-size:15px}.reason-list{display:grid;gap:8px}.reason{padding:9px 11px;border-radius:8px;font-size:12px;line-height:1.5;border-inline-start:4px solid var(--info);background:var(--field)}.reason.good{border-color:var(--good)}.reason.mid{border-color:var(--warn)}.reason.risk{border-color:var(--bad)}.reason.final{border-color:var(--brand);font-weight:700}
 footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);font-size:11px;line-height:1.6}
 .loading{opacity:.68;pointer-events:none}.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}.loading .spinner{display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}
@@ -137,12 +136,10 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
     <section class="panel" aria-labelledby="formTitle">
       <div class="panel-head">
         <div><h3 id="formTitle">Agricultural Loan Assessment</h3><p id="formHint">Enter the farmer and project information. The model will calculate risk, project cost, eligible financing, and a recommended loan amount.</p></div>
-        <div class="step">1</div>
       </div>
       <form id="loanForm">
         <div class="form-grid">
           <div class="field"><label for="governorate" id="lGovernorate">Governorate</label><select id="governorate" name="governorate" required></select></div>
-          <div class="field"><label for="gender" id="lGender">Applicant gender</label><select id="gender" name="gender"></select></div>
           <div class="field full"><label for="projectType" id="lProject">Project type</label><select id="projectType" name="projectType" required></select></div>
           <div class="field full"><label for="cropActivity" id="lCrop">Crop or activity</label><select id="cropActivity" name="cropActivity" required></select></div>
           <div class="field"><label for="irrigationType" id="lIrrigation">Irrigation type</label><select id="irrigationType" name="irrigationType" required></select></div>
@@ -164,24 +161,36 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
 
     <section class="result-panel" aria-labelledby="resultTitle">
       <div class="panel-head">
-        <div><h3 id="resultTitle">Decision Support Result</h3><p id="resultHint">The recommendation supports the lending officer and does not replace the final institutional decision.</p></div>
-        <div class="step">2</div>
+        <div><h3 id="resultTitle">AI Risk Result</h3><p id="resultHint">The model explains the risk level and how the financing recommendation was calculated.</p></div>
       </div>
       <div class="empty-state" id="emptyState"><div><div class="empty-icon">🌱</div><h4 id="emptyTitle">No assessment yet</h4><p id="emptyText">Complete the form and select “Analyze Application” to view the AI-supported result.</p></div></div>
       <div class="result-content" id="resultContent">
         <div class="score-wrap">
           <div class="score-ring" id="scoreRing"><div class="score-inner"><div class="score-number" id="riskScore">0</div><div class="score-denom" id="scoreDenom">out of 100</div></div></div>
-          <div class="decision"><span class="risk-badge low" id="riskBadge">Low Risk</span><h4 id="decisionHeading">Recommended financing decision</h4><p id="decisionSummary">The platform combines the model score with estimated project cost and financing eligibility.</p></div>
+          <div class="decision">
+            <div class="decision-kicker" id="overallRiskL">Overall application risk</div>
+            <span class="risk-badge low" id="riskBadge">Low Risk</span>
+            <h4 class="decision-amount" id="headlineLoan">—</h4>
+            <p id="decisionSummary">The model recommendation will be explained here after the assessment.</p>
+          </div>
         </div>
         <div class="metric-grid">
-          <div class="metric"><div class="m-label" id="mRecommendedL">Recommended loan</div><div class="m-value" id="mRecommended">—</div></div>
-          <div class="metric"><div class="m-label" id="mEligibleL">Maximum eligible financing</div><div class="m-value" id="mEligible">—</div></div>
-          <div class="metric"><div class="m-label" id="mCostL">Estimated project cost</div><div class="m-value" id="mCost">—</div></div>
-          <div class="metric"><div class="m-label" id="mRatioL">Overfinancing ratio</div><div class="m-value" id="mRatio">—</div></div>
+          <div class="metric"><div class="m-label" id="mRecommendedL">Recommended loan</div><div class="m-value" id="mRecommended">—</div><div class="m-desc" id="mRecommendedD">Risk-adjusted amount after comparing the request with the eligible limit.</div></div>
+          <div class="metric"><div class="m-label" id="mEligibleL">Maximum eligible financing</div><div class="m-value" id="mEligible">—</div><div class="m-desc" id="mEligibleD">Calculated as 75% of the estimated project cost.</div></div>
+          <div class="metric"><div class="m-label" id="mCostL">Estimated project cost</div><div class="m-value" id="mCost">—</div><div class="m-desc" id="mCostD">Cost per unit multiplied by farm area or number of units.</div></div>
+          <div class="metric"><div class="m-label" id="mFlagL">Over-financing ratio</div><div class="m-value" id="mFlag">—</div><div class="m-desc" id="mFlagD">Requested loan compared with the maximum eligible financing amount.</div></div>
+        </div>
+        <div class="logic-card">
+          <h4 id="logicTitle">Cost & Financing Logic</h4>
+          <div class="logic-row"><span id="costUnitL">Cost per dunum / unit</span><b id="costUnit">—</b></div>
+          <div class="logic-row"><span id="logicCostL">Estimated project cost</span><b id="logicCost">—</b></div>
+          <div class="logic-row"><span id="logicEligibleL">Maximum eligible financing (75%)</span><b id="logicEligible">—</b></div>
+          <div class="logic-row"><span id="logicRequestedL">Requested loan</span><b id="logicRequested">—</b></div>
+          <div class="logic-row"><span id="logicGapL">Amount above eligible limit</span><b id="logicGap">—</b></div>
+          <p class="logic-note" id="logicNote">The system compares the requested amount with the estimated project cost, the eligible financing ceiling, expected revenue, and risk level.</p>
         </div>
         <div class="decision-strip">
-          <div class="decision-item"><b id="routeL">Approval route</b><span id="routeValue">—</span></div>
-          <div class="decision-item"><b id="repaymentL">Repayment plan</b><span id="repaymentValue">—</span></div>
+          <div class="decision-item"><b id="repaymentL">Repayment plan</b><span id="repaymentValue">—</span><small id="repaymentD">Suggested according to project type and repayment period.</small></div>
         </div>
         <div class="reason-box"><h4 id="reasonsTitle">Why this result?</h4><div class="reason-list" id="reasonList"></div></div>
       </div>
@@ -204,7 +213,6 @@ const DATA={
   irrigation:[['Drip','Drip','تنقيط'],["Rainfed (Ba'al)","Rainfed (Ba'al)",'بعلي'],['Surface','Surface','سطحي'],['Controlled (Greenhouse)','Controlled (Greenhouse)','محمي / بيت بلاستيكي'],['Center Pivot','Center Pivot','ري محوري']],
   water:[['High','High','مرتفع'],['Medium','Medium','متوسط'],['Low','Low','منخفض']],
   yesNo:[['Yes','Yes','نعم'],['No','No','لا']],
-  gender:[['ذكر','Male','ذكر'],['أنثى','Female','أنثى']],
   financing:[['فائدة','Interest-based','فائدة'],['مرابحة','Murabaha','مرابحة']]
 };
 
@@ -217,10 +225,12 @@ const T={
   startBtn:{en:'Start Assessment',ar:'ابدأ التقييم'},heroDashboardLink:{en:'Open Dashboard ↗',ar:'افتح لوحة التحليلات ↗'},
   stat1:{en:'AI risk score with clear risk class',ar:'درجة مخاطر ذكية مع تصنيف واضح'},stat2:{en:'Maximum eligible financing baseline',ar:'خط أساس للحد الأعلى للتمويل المؤهل'},stat3:{en:'Dashboard views for portfolio, lending, and risk',ar:'واجهات للمحفظة والإقراض والمخاطر'},stat4:{en:'Bilingual and accessibility-ready interface',ar:'واجهة عربية وإنجليزية تدعم سهولة الوصول'},
   formTitle:{en:'Agricultural Loan Assessment',ar:'تقييم طلب التمويل الزراعي'},formHint:{en:'Enter the farmer and project information. The model will calculate risk, project cost, eligible financing, and a recommended loan amount.',ar:'أدخل بيانات المزارع والمشروع. سيحسب النظام المخاطر وتكلفة المشروع والتمويل المؤهل ومبلغ القرض المقترح.'},
-  lGovernorate:{en:'Governorate',ar:'المحافظة'},lGender:{en:'Applicant gender',ar:'جنس مقدم الطلب'},lProject:{en:'Project type',ar:'نوع المشروع'},lCrop:{en:'Crop or activity',ar:'المحصول أو النشاط'},lIrrigation:{en:'Irrigation type',ar:'نوع الري'},lWater:{en:'Water availability',ar:'توفر المياه'},lArea:{en:'Farm area / units',ar:'مساحة المزرعة / عدد الوحدات'},lYears:{en:'Repayment period (years)',ar:'فترة السداد (بالسنوات)'},lRequested:{en:'Requested loan (JOD)',ar:'القرض المطلوب (دينار)'},lRevenue:{en:'Expected annual revenue (JOD)',ar:'الإيراد السنوي المتوقع (دينار)'},lFirst:{en:'First-time borrower?',ar:'مقترض لأول مرة؟'},lMethod:{en:'Financing method',ar:'طريقة التمويل'},
+  lGovernorate:{en:'Governorate',ar:'المحافظة'},lProject:{en:'Project type',ar:'نوع المشروع'},lCrop:{en:'Crop or activity',ar:'المحصول أو النشاط'},lIrrigation:{en:'Irrigation type',ar:'نوع الري'},lWater:{en:'Water availability',ar:'توفر المياه'},lArea:{en:'Farm area / units',ar:'مساحة المزرعة / عدد الوحدات'},lYears:{en:'Repayment period (years)',ar:'فترة السداد (بالسنوات)'},lRequested:{en:'Requested loan (JOD)',ar:'القرض المطلوب (دينار)'},lRevenue:{en:'Expected annual revenue (JOD)',ar:'الإيراد السنوي المتوقع (دينار)'},lFirst:{en:'First-time borrower?',ar:'مقترض لأول مرة؟'},lMethod:{en:'Financing method',ar:'طريقة التمويل'},
   submitText:{en:'Analyze Application',ar:'تحليل الطلب'},exampleBtn:{en:'Load Example',ar:'تحميل مثال'},
-  resultTitle:{en:'Decision Support Result',ar:'نتيجة دعم القرار'},resultHint:{en:'The recommendation supports the lending officer and does not replace the final institutional decision.',ar:'التوصية تدعم موظف الإقراض ولا تستبدل القرار المؤسسي النهائي.'},emptyTitle:{en:'No assessment yet',ar:'لا توجد نتيجة بعد'},emptyText:{en:'Complete the form and select “Analyze Application” to view the AI-supported result.',ar:'أكمل النموذج واضغط «تحليل الطلب» لعرض النتيجة المدعومة بالذكاء الاصطناعي.'},scoreDenom:{en:'out of 100',ar:'من 100'},decisionHeading:{en:'Recommended financing decision',ar:'التوصية التمويلية'},decisionSummary:{en:'The platform combines the model score with estimated project cost and financing eligibility.',ar:'تجمع المنصة بين درجة النموذج وتكلفة المشروع المقدرة وحد التمويل المؤهل.'},
-  mRecommendedL:{en:'Recommended loan',ar:'القرض المقترح'},mEligibleL:{en:'Maximum eligible financing',ar:'الحد الأعلى للتمويل المؤهل'},mCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},mRatioL:{en:'Overfinancing ratio',ar:'نسبة التمويل الزائد'},routeL:{en:'Approval route',ar:'مسار الموافقة'},repaymentL:{en:'Repayment plan',ar:'خطة السداد'},reasonsTitle:{en:'Why this result?',ar:'لماذا ظهرت هذه النتيجة؟'},footerText:{en:'Prototype decision-support system for ACC Jordan · AgriFin AI — HTU',ar:'نظام أولي لدعم قرارات مؤسسة الإقراض الزراعي في الأردن · AgriFin AI — جامعة الحسين التقنية'},
+  resultTitle:{en:'AI Risk Result',ar:'نتيجة تحليل المخاطر'},resultHint:{en:'The model explains the risk level and how the financing recommendation was calculated.',ar:'يوضح النموذج مستوى المخاطر وكيف تم احتساب التوصية التمويلية.'},emptyTitle:{en:'No assessment yet',ar:'لا توجد نتيجة بعد'},emptyText:{en:'Complete the form and select “Analyze Application” to view the AI-supported result.',ar:'أكمل النموذج واضغط «تحليل الطلب» لعرض النتيجة المدعومة بالذكاء الاصطناعي.'},scoreDenom:{en:'out of 100',ar:'من 100'},overallRiskL:{en:'Overall application risk',ar:'مخاطر الطلب بشكل عام'},
+  mRecommendedL:{en:'Recommended loan',ar:'القرض المقترح'},mRecommendedD:{en:'Risk-adjusted amount after comparing the request with the eligible limit.',ar:'مبلغ معدل حسب المخاطر بعد مقارنة القرض المطلوب بحد التمويل المؤهل.'},mEligibleL:{en:'Maximum eligible financing',ar:'الحد الأعلى للتمويل المؤهل'},mEligibleD:{en:'Calculated as 75% of the estimated project cost.',ar:'يُحتسب بنسبة 75% من تكلفة المشروع المقدرة.'},mCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},mCostD:{en:'Cost per unit multiplied by farm area or number of units.',ar:'تكلفة الوحدة مضروبة في مساحة المشروع أو عدد الوحدات.'},mFlagL:{en:'Over-financing ratio',ar:'نسبة التمويل الزائد'},mFlagD:{en:'Requested loan compared with the maximum eligible financing amount.',ar:'مقارنة القرض المطلوب مع الحد الأعلى للتمويل المؤهل.'},
+  logicTitle:{en:'Cost & Financing Logic',ar:'منطق التكلفة والتمويل'},costUnitL:{en:'Cost per dunum / unit',ar:'التكلفة لكل دونم / وحدة'},logicCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},logicEligibleL:{en:'Maximum eligible financing (75%)',ar:'الحد الأعلى للتمويل المؤهل (75%)'},logicRequestedL:{en:'Requested loan',ar:'القرض المطلوب'},logicGapL:{en:'Amount above eligible limit',ar:'المبلغ الزائد عن حد الأهلية'},logicNote:{en:'The system compares the requested amount with the estimated project cost, the eligible financing ceiling, expected revenue, and risk level.',ar:'يقارن النظام القرض المطلوب بتكلفة المشروع المقدرة وسقف التمويل المؤهل والإيراد المتوقع ومستوى المخاطر.'},
+  repaymentL:{en:'Repayment plan',ar:'خطة السداد'},repaymentD:{en:'Suggested according to project type and repayment period.',ar:'تُقترح وفق نوع المشروع وفترة السداد.'},reasonsTitle:{en:'Why this result?',ar:'لماذا ظهرت هذه النتيجة؟'},footerText:{en:'Prototype decision-support system for ACC Jordan · AgriFin AI — HTU',ar:'نظام أولي لدعم قرارات مؤسسة الإقراض الزراعي في الأردن · AgriFin AI — جامعة الحسين التقنية'},
   loading:{en:'Analyzing the application…',ar:'جارٍ تحليل الطلب…'},success:{en:'Assessment completed successfully.',ar:'تم تحليل الطلب بنجاح.'},error:{en:'The assessment could not be completed. Please check the server and try again.',ar:'تعذر إكمال التقييم. تحقق من الخادم وحاول مرة أخرى.'}
 };
 
@@ -230,13 +240,45 @@ function updateDashboardLinks(){const q=new URLSearchParams({lang:LANG,theme:THE
 function setTheme(theme,persist=true){THEME=['light','dark','cb'].includes(theme)?theme:'light';document.body.dataset.theme=THEME;document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active',b.dataset.t===THEME));if(persist)localStorage.setItem(THEME_KEY,THEME);updateDashboardLinks()}
 function setLanguage(lang,persist=true){LANG=lang==='ar'?'ar':'en';document.body.dir=LANG==='ar'?'rtl':'ltr';document.documentElement.lang=LANG;document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('active',b.dataset.l===LANG));if(persist)localStorage.setItem(LANG_KEY,LANG);applyTranslations();populateSelects();updateDashboardLinks()}
 function applyTranslations(){Object.keys(T).forEach(key=>{const el=$(key);if(el)el.textContent=tr(key)});$('dashboardLink').title=tr('dashboardTitle');$('heroDashboardLink').title=tr('dashboardTitle')}
-function populateSelects(){const current=id=>$(id).value;const keep={governorate:current('governorate'),gender:current('gender'),projectType:current('projectType'),cropActivity:current('cropActivity'),irrigationType:current('irrigationType'),waterAvailability:current('waterAvailability'),firstTime:current('firstTime'),financingMethod:current('financingMethod')};fillSelect('governorate',DATA.governorates,keep.governorate||'Ajloun');fillSelect('gender',DATA.gender,keep.gender||'ذكر');fillSelect('projectType',DATA.projects,keep.projectType||'Olives / Fruit Trees');fillSelect('cropActivity',DATA.crops,keep.cropActivity||'Olives');fillSelect('irrigationType',DATA.irrigation,keep.irrigationType||'Drip');fillSelect('waterAvailability',DATA.water,keep.waterAvailability||'High');fillSelect('firstTime',DATA.yesNo,keep.firstTime||'No');fillSelect('financingMethod',DATA.financing,keep.financingMethod||'فائدة')}
+function populateSelects(){const current=id=>$(id).value;const keep={governorate:current('governorate'),projectType:current('projectType'),cropActivity:current('cropActivity'),irrigationType:current('irrigationType'),waterAvailability:current('waterAvailability'),firstTime:current('firstTime'),financingMethod:current('financingMethod')};fillSelect('governorate',DATA.governorates,keep.governorate||'Ajloun');fillSelect('projectType',DATA.projects,keep.projectType||'Olives / Fruit Trees');fillSelect('cropActivity',DATA.crops,keep.cropActivity||'Olives');fillSelect('irrigationType',DATA.irrigation,keep.irrigationType||'Drip');fillSelect('waterAvailability',DATA.water,keep.waterAvailability||'High');fillSelect('firstTime',DATA.yesNo,keep.firstTime||'No');fillSelect('financingMethod',DATA.financing,keep.financingMethod||'فائدة')}
 function money(v){const n=Math.round(Number(v)||0).toLocaleString(LANG==='ar'?'ar-JO':'en-US');return LANG==='ar'?`${n} د.أ`:`JD ${n}`}
-function showResult(data){$('emptyState').classList.add('hidden');$('resultContent').classList.add('visible');const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));$('riskScore').textContent=score.toFixed(1).replace('.0','');const cls=(data.risk_class||'Low').toLowerCase();const ring=cls==='high'?'var(--bad)':cls==='medium'?'var(--warn)':'var(--good)';$('scoreRing').style.setProperty('--score',score);$('scoreRing').style.setProperty('--ring',ring);$('riskBadge').className='risk-badge '+cls;$('riskBadge').textContent=data.risk_class_label||data.risk_class;$('mRecommended').textContent=money(data.recommended_loan_jod);$('mEligible').textContent=money(data.max_eligible_financing_jod);$('mCost').textContent=money(data.estimated_project_cost_jod);$('mRatio').textContent=`${Number(data.overfinancing_ratio||0).toFixed(2)}×`;$('routeValue').textContent=data.approval_route||'—';$('repaymentValue').textContent=data.repayment_plan||'—';$('reasonList').innerHTML=(data.risk_reasons||[]).map(r=>`<div class="reason ${r.level||''}">${escapeHtml(r.text||'')}</div>`).join('')}
+function showResult(data){
+  $('emptyState').classList.add('hidden');
+  $('resultContent').classList.add('visible');
+  const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));
+  const requested=Number(data.requested_loan_jod)||0;
+  const eligible=Number(data.max_eligible_financing_jod)||0;
+  const recommended=Number(data.recommended_loan_jod)||0;
+  const cost=Number(data.estimated_project_cost_jod)||0;
+  const gap=Math.max(0,requested-eligible);
+  $('riskScore').textContent=score.toFixed(1).replace('.0','');
+  const cls=(data.risk_class||'Low').toLowerCase();
+  const ring=cls==='high'?'var(--bad)':cls==='medium'?'var(--warn)':'var(--good)';
+  $('scoreRing').style.setProperty('--score',score);
+  $('scoreRing').style.setProperty('--ring',ring);
+  $('riskBadge').className='risk-badge '+cls;
+  $('riskBadge').textContent=data.risk_class_label||data.risk_class;
+  $('headlineLoan').textContent=money(recommended);
+  $('decisionSummary').textContent=LANG==='ar'
+    ?`يوصي النموذج بقرض قدره ${money(recommended)} من أصل ${money(requested)} مطلوبة، بعد مقارنة تكلفة المشروع وحد التمويل المؤهل ودرجة المخاطر وعوامل المياه والإيراد وفترة السداد.`
+    :`The model recommends ${money(recommended)} from a requested ${money(requested)}, after comparing project cost, eligible financing, risk score, water, revenue, and repayment period.`;
+  $('mRecommended').textContent=money(recommended);
+  $('mEligible').textContent=money(eligible);
+  $('mCost').textContent=money(cost);
+  const overRatio=Number(data.overfinancing_ratio)||0;
+  $('mFlag').textContent=`${overRatio.toFixed(2).replace(/\.?0+$/,'')}×`;
+  $('costUnit').textContent=money(data.cost_per_unit_jod);
+  $('logicCost').textContent=money(cost);
+  $('logicEligible').textContent=money(eligible);
+  $('logicRequested').textContent=money(requested);
+  $('logicGap').textContent=money(gap);
+  $('repaymentValue').textContent=data.repayment_plan||'—';
+  $('reasonList').innerHTML=(data.risk_reasons||[]).map(r=>`<div class="reason ${r.level||''}">${escapeHtml(r.text||'')}</div>`).join('');
+}
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function formPayload(){const fd=new FormData($('loanForm'));return Object.fromEntries(fd.entries())}
 async function submitAssessment(e){e.preventDefault();const btn=$('submitBtn');btn.classList.add('loading');$('formStatus').textContent=tr('loading');try{const payload={...formPayload(),lang:LANG};const res=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Request failed');showResult(data);$('formStatus').textContent=tr('success')}catch(err){console.error(err);$('formStatus').textContent=tr('error')}finally{btn.classList.remove('loading')}}
-function loadExample(){const values={governorate:'Irbid',gender:'ذكر',projectType:'Olives / Fruit Trees',cropActivity:'Olives',irrigationType:'Drip',waterAvailability:'High',farmArea:'10',periodYears:'5',requestedLoan:'1000',expectedRevenue:'4500',firstTime:'No',financingMethod:'فائدة'};Object.entries(values).forEach(([k,v])=>{$(k).value=v});$('formStatus').textContent=''}
+function loadExample(){const values={governorate:'Irbid',projectType:'Olives / Fruit Trees',cropActivity:'Olives',irrigationType:'Drip',waterAvailability:'High',farmArea:'10',periodYears:'5',requestedLoan:'1000',expectedRevenue:'4500',firstTime:'No',financingMethod:'فائدة'};Object.entries(values).forEach(([k,v])=>{$(k).value=v});$('formStatus').textContent=''}
 
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
 document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.l)));
