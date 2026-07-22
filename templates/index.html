@@ -526,6 +526,39 @@ function localChatAnswer(question){
     );
   }
 
+  if(
+    (q.includes('تكلفه')&&(q.includes('دونم')||q.includes('وحده'))) ||
+    includesAny(q,[
+      'التكلفه لكل دونم',
+      'التكلفة لكل دونم',
+      'تكلفه الدونم',
+      'تكلفة الدونم',
+      'سعر الدونم',
+      'التكلفه لكل وحده',
+      'التكلفة لكل وحدة',
+      'تكلفه الوحده',
+      'تكلفة الوحدة',
+      'cost per dunum',
+      'cost per unit',
+      'unit cost'
+    ])
+  ){
+    const activity=currentFieldValue('cropActivity');
+    if(data){
+      const unit=Number(data.cost_per_unit_jod)||0;
+      const area=Number(currentFieldValue('farmArea'))||0;
+      const cost=Number(data.estimated_project_cost_jod)||0;
+      return chatText(
+        `Cost per dunum or unit is the reference cost assigned to the selected agricultural activity for one dunum or one production unit. It is used to estimate total project cost, not to determine the requested loan. For the current activity${activity?` (${activity})`:''}, the reference cost is ${chatMoney(unit)}. The system then calculates: ${chatMoney(unit)} × ${area||'the entered number of units'} = ${chatMoney(cost)}.`,
+        `التكلفة لكل دونم أو وحدة هي التكلفة المرجعية المعتمدة للنشاط الزراعي المحدد مقابل دونم واحد أو وحدة إنتاج واحدة. يستخدمها النظام لتقدير تكلفة المشروع الكلية، وليست قيمة القرض المطلوب. للنشاط الحالي${activity?` (${activity})`:''} تبلغ التكلفة المرجعية ${chatMoney(unit)}. ثم يحسب النظام: ${chatMoney(unit)} × ${area||'عدد الوحدات المدخلة'} = ${chatMoney(cost)}.`
+      );
+    }
+    return chatText(
+      'Cost per dunum or unit is the reference cost for one dunum or one production unit of the selected activity. The system multiplies it by the entered farm area or number of units to estimate total project cost.',
+      'التكلفة لكل دونم أو وحدة هي التكلفة المرجعية لدونم واحد أو وحدة إنتاج واحدة من النشاط المحدد. يضربها النظام في مساحة المزرعة أو عدد الوحدات المدخلة لتقدير تكلفة المشروع الكلية.'
+    );
+  }
+
   if(includesAny(q,['تكلفه المشروع المقدره','تكلفة المشروع المقدرة','estimated project cost','project cost'])){
     if(data){
       const cost=Number(data.estimated_project_cost_jod)||0;
@@ -631,8 +664,8 @@ function localChatAnswer(question){
   }
 
   return chatText(
-    'I can explain fields such as irrigation type, expected annual revenue, requested loan, farm area, water availability, risk score, estimated cost, eligible financing, recommended loan, over-financing ratio, and repayment plan. Please ask about one of them.',
-    'أستطيع شرح حقول مثل نوع الري، الإيراد السنوي المتوقع، القرض المطلوب، مساحة المزرعة، توفر المياه، درجة المخاطر، تكلفة المشروع، حد التمويل المؤهل، القرض المقترح، نسبة التمويل الزائد، وخطة السداد. اسألني عن أحدها.'
+    'I can explain fields such as irrigation type, expected annual revenue, requested loan, farm area, water availability, cost per dunum or unit, risk score, estimated cost, eligible financing, recommended loan, over-financing ratio, and repayment plan. Please ask about one of them.',
+    'أستطيع شرح حقول مثل نوع الري، الإيراد السنوي المتوقع، القرض المطلوب، مساحة المزرعة، توفر المياه، التكلفة لكل دونم أو وحدة، درجة المخاطر، تكلفة المشروع، حد التمويل المؤهل، القرض المقترح، نسبة التمويل الزائد، وخطة السداد. اسألني عن أحدها.'
   );
 }
 function submitChatMessage(message){
