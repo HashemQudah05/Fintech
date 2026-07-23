@@ -212,7 +212,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
     <div class="hero-copy">
       <div class="eyebrow" id="eyebrow">AI-powered agricultural lending</div>
       <h2 id="heroTitle">Faster, fairer, and more sustainable agricultural loan decisions.</h2>
-      <p id="heroText">AgriFin AI combines project cost estimation, eligibility rules, and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.</p>
+      <p id="heroText">AgriFin AI combines project cost estimation and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.</p>
       <div class="hero-actions">
         <a class="primary-btn" href="#assessment" id="startBtn">Start Assessment</a>
         <a class="secondary-btn" href="/dashboard" target="_blank" rel="noopener noreferrer" id="heroDashboardLink">Open Dashboard ↗</a>
@@ -220,7 +220,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
     </div>
     <aside class="hero-card" aria-label="Platform capabilities">
       <div class="mini-stat"><div class="value">0–100</div><div class="label" id="stat1">AI risk score with clear risk class</div></div>
-      <div class="mini-stat"><div class="value">75%</div><div class="label" id="stat2">Maximum eligible financing baseline</div></div>
+      <div class="mini-stat"><div class="value">ACC</div><div class="label" id="stat2">Project cost estimation based on the agricultural cost guide</div></div>
       <div class="mini-stat"><div class="value">3</div><div class="label" id="stat3">Dashboard views for portfolio, lending, and risk</div></div>
       <div class="mini-stat"><div class="value">AR / EN</div><div class="label" id="stat4">Bilingual and accessibility-ready interface</div></div>
     </aside>
@@ -229,7 +229,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
   <section class="workspace" id="assessment">
     <section class="panel" aria-labelledby="formTitle">
       <div class="panel-head">
-        <div><h3 id="formTitle">Agricultural Loan Assessment</h3><p id="formHint">Enter the farmer and project information. The model will calculate risk, project cost, eligible financing, and a recommended loan amount.</p></div>
+        <div><h3 id="formTitle">Agricultural Loan Assessment</h3><p id="formHint">Enter the farmer and project information. The model will calculate risk, estimated project cost, and a recommended loan amount.</p></div>
       </div>
       <form id="loanForm">
         <div class="form-grid">
@@ -269,19 +269,18 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
           </div>
         </div>
         <div class="metric-grid">
-          <div class="metric"><div class="m-label" id="mRecommendedL">Recommended loan</div><div class="m-value" id="mRecommended">—</div><div class="m-desc" id="mRecommendedD">Risk-adjusted amount after comparing the request with the eligible limit.</div></div>
-          <div class="metric"><div class="m-label" id="mEligibleL">Maximum eligible financing</div><div class="m-value" id="mEligible">—</div><div class="m-desc" id="mEligibleD">Calculated as 75% of the estimated project cost.</div></div>
+          <div class="metric"><div class="m-label" id="mRecommendedL">Recommended loan</div><div class="m-value" id="mRecommended">—</div><div class="m-desc" id="mRecommendedD">Risk-adjusted amount after comparing the request with the estimated project cost.</div></div>
+          <div class="metric"><div class="m-label" id="mRequestedL">Requested loan</div><div class="m-value" id="mRequested">—</div><div class="m-desc" id="mRequestedD">Financing amount requested by the applicant.</div></div>
           <div class="metric"><div class="m-label" id="mCostL">Estimated project cost</div><div class="m-value" id="mCost">—</div><div class="m-desc" id="mCostD">Cost per unit multiplied by farm area or number of units.</div></div>
-          <div class="metric"><div class="m-label" id="mFlagL">Over-financing ratio</div><div class="m-value" id="mFlag">—</div><div class="m-desc" id="mFlagD">Requested loan compared with the maximum eligible financing amount.</div></div>
+          <div class="metric"><div class="m-label" id="mFlagL">Over-financing ratio</div><div class="m-value" id="mFlag">—</div><div class="m-desc" id="mFlagD">Requested loan compared with the estimated project cost.</div></div>
         </div>
         <div class="logic-card">
           <h4 id="logicTitle">Cost & Financing Logic</h4>
           <div class="logic-row"><span id="costUnitL">Cost per dunum / unit</span><b id="costUnit">—</b></div>
           <div class="logic-row"><span id="logicCostL">Estimated project cost</span><b id="logicCost">—</b></div>
-          <div class="logic-row"><span id="logicEligibleL">Maximum eligible financing (75%)</span><b id="logicEligible">—</b></div>
           <div class="logic-row"><span id="logicRequestedL">Requested loan</span><b id="logicRequested">—</b></div>
-          <div class="logic-row"><span id="logicGapL">Amount above eligible limit</span><b id="logicGap">—</b></div>
-          <p class="logic-note" id="logicNote">The system compares the requested amount with the estimated project cost, the eligible financing ceiling, expected revenue, and risk level.</p>
+          <div class="logic-row"><span id="logicGapL">Amount above estimated project cost</span><b id="logicGap">—</b></div>
+          <p class="logic-note" id="logicNote">The system compares the requested loan with the estimated project cost, expected revenue, and risk level.</p>
         </div>
         <div class="decision-strip">
           <div class="decision-item"><b id="repaymentL">Repayment plan</b><span id="repaymentValue">—</span><small id="repaymentD">Suggested according to project type and repayment period.</small></div>
@@ -320,7 +319,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
     <div class="chat-quick-label" id="chatQuickLabel">Suggested questions</div>
     <div class="chat-chips">
       <button class="chat-chip" type="button" data-chat-key="revenue" id="chatChipRevenue">What is expected annual revenue?</button>
-      <button class="chat-chip" type="button" data-chat-key="eligible" id="chatChipEligible">How is eligible financing calculated?</button>
+      <button class="chat-chip" type="button" data-chat-key="cost" id="chatChipCost">How is project cost calculated?</button>
       <button class="chat-chip" type="button" data-chat-key="risk" id="chatChipRisk">What does the risk score mean?</button>
     </div>
   </div>
@@ -357,7 +356,7 @@ const T={
   chatWelcome:{en:'Hello! Ask me about any AgriFin field, calculation, or current result.',ar:'مرحبًا! اسألني عن أي حقل أو عملية حسابية أو نتيجة حالية في AgriFin AI.'},
   chatQuickLabel:{en:'Suggested questions',ar:'أسئلة مقترحة'},
   chatChipRevenue:{en:'What is expected annual revenue?',ar:'ما المقصود بالإيراد السنوي المتوقع؟'},
-  chatChipEligible:{en:'How is eligible financing calculated?',ar:'كيف يُحسب الحد الأعلى للتمويل المؤهل؟'},
+  chatChipCost:{en:'How is project cost calculated?',ar:'كيف تُحسب تكلفة المشروع؟'},
   chatChipRisk:{en:'What does the risk score mean?',ar:'ماذا تعني درجة المخاطر؟'},
   chatNote:{en:'Field and result explanations are available.',ar:'شرح الحقول والنتائج متاح الآن.'},
 
@@ -365,15 +364,15 @@ const T={
   assessmentNav:{en:'Loan Assessment',ar:'تقييم طلب التمويل'},dashboardLink:{en:'Analytics Dashboard ↗',ar:'لوحة التحليلات ↗'},dashboardTitle:{en:'Opens in a new tab',ar:'تفتح في تبويب جديد'},
   eyebrow:{en:'AI-powered agricultural lending',ar:'تمويل زراعي مدعوم بالذكاء الاصطناعي'},
   heroTitle:{en:'Faster, fairer, and more sustainable agricultural loan decisions.',ar:'قرارات تمويل زراعي أسرع وأكثر عدالة واستدامة.'},
-  heroText:{en:'AgriFin AI combines project cost estimation, eligibility rules, and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.',ar:'تجمع منصة AgriFin AI بين تقدير تكلفة المشروع وقواعد الأهلية ودرجة المخاطر بالذكاء الاصطناعي لدعم موظف الإقراض الزراعي بتوصية واضحة وأسباب قابلة للفهم.'},
+  heroText:{en:'AgriFin AI combines project cost estimation and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.',ar:'تجمع منصة AgriFin AI بين تقدير تكلفة المشروع ودرجة المخاطر بالذكاء الاصطناعي لدعم موظف الإقراض الزراعي بتوصية واضحة وأسباب قابلة للفهم.'},
   startBtn:{en:'Start Assessment',ar:'ابدأ التقييم'},heroDashboardLink:{en:'Open Dashboard ↗',ar:'افتح لوحة التحليلات ↗'},
-  stat1:{en:'AI risk score with clear risk class',ar:'درجة مخاطر ذكية مع تصنيف واضح'},stat2:{en:'Maximum eligible financing baseline',ar:'خط أساس للحد الأعلى للتمويل المؤهل'},stat3:{en:'Dashboard views for portfolio, lending, and risk',ar:'واجهات للمحفظة والإقراض والمخاطر'},stat4:{en:'Bilingual and accessibility-ready interface',ar:'واجهة عربية وإنجليزية تدعم سهولة الوصول'},
-  formTitle:{en:'Agricultural Loan Assessment',ar:'تقييم طلب التمويل الزراعي'},formHint:{en:'Enter the farmer and project information. The model will calculate risk, project cost, eligible financing, and a recommended loan amount.',ar:'أدخل بيانات المزارع والمشروع. سيحسب النظام المخاطر وتكلفة المشروع والتمويل المؤهل ومبلغ القرض المقترح.'},
+  stat1:{en:'AI risk score with clear risk class',ar:'درجة مخاطر ذكية مع تصنيف واضح'},stat2:{en:'Project cost estimation based on the agricultural cost guide',ar:'تقدير تكلفة المشروع بالاعتماد على دليل التكاليف الزراعية'},stat3:{en:'Dashboard views for portfolio, lending, and risk',ar:'واجهات للمحفظة والإقراض والمخاطر'},stat4:{en:'Bilingual and accessibility-ready interface',ar:'واجهة عربية وإنجليزية تدعم سهولة الوصول'},
+  formTitle:{en:'Agricultural Loan Assessment',ar:'تقييم طلب التمويل الزراعي'},formHint:{en:'Enter the farmer and project information. The model will calculate risk, estimated project cost, and a recommended loan amount.',ar:'أدخل بيانات المزارع والمشروع. سيحسب النظام المخاطر وتكلفة المشروع ومبلغ القرض المقترح.'},
   lGovernorate:{en:'Governorate',ar:'المحافظة'},lProject:{en:'Project type',ar:'نوع المشروع'},lCrop:{en:'Crop or activity',ar:'المحصول أو النشاط'},lIrrigation:{en:'Irrigation type',ar:'نوع الري'},lWater:{en:'Water availability',ar:'توفر المياه'},lArea:{en:'Farm area / units',ar:'مساحة المزرعة / عدد الوحدات'},lYears:{en:'Repayment period (years)',ar:'فترة السداد (بالسنوات)'},lRequested:{en:'Requested loan (JOD)',ar:'القرض المطلوب (دينار)'},lRevenue:{en:'Expected annual revenue (JOD)',ar:'الإيراد السنوي المتوقع (دينار)'},lFirst:{en:'First-time borrower?',ar:'مقترض لأول مرة؟'},lMethod:{en:'Financing method',ar:'طريقة التمويل'},
   submitText:{en:'Analyze Application',ar:'تحليل الطلب'},exampleBtn:{en:'Load Example',ar:'تحميل مثال'},
   resultTitle:{en:'AI Risk Result',ar:'نتيجة تحليل المخاطر'},resultHint:{en:'The model explains the risk level and how the financing recommendation was calculated.',ar:'يوضح النموذج مستوى المخاطر وكيف تم احتساب التوصية التمويلية.'},emptyTitle:{en:'No assessment yet',ar:'لا توجد نتيجة بعد'},emptyText:{en:'Complete the form and select “Analyze Application” to view the AI-supported result.',ar:'أكمل النموذج واضغط «تحليل الطلب» لعرض النتيجة المدعومة بالذكاء الاصطناعي.'},scoreDenom:{en:'out of 100',ar:'من 100'},overallRiskL:{en:'Overall application risk',ar:'مخاطر الطلب بشكل عام'},
-  mRecommendedL:{en:'Recommended loan',ar:'القرض المقترح'},mRecommendedD:{en:'Risk-adjusted amount after comparing the request with the eligible limit.',ar:'مبلغ معدل حسب المخاطر بعد مقارنة القرض المطلوب بحد التمويل المؤهل.'},mEligibleL:{en:'Maximum eligible financing',ar:'الحد الأعلى للتمويل المؤهل'},mEligibleD:{en:'Calculated as 75% of the estimated project cost.',ar:'يُحتسب بنسبة 75% من تكلفة المشروع المقدرة.'},mCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},mCostD:{en:'Cost per unit multiplied by farm area or number of units.',ar:'تكلفة الوحدة مضروبة في مساحة المشروع أو عدد الوحدات.'},mFlagL:{en:'Over-financing ratio',ar:'نسبة التمويل الزائد'},mFlagD:{en:'Requested loan compared with the maximum eligible financing amount.',ar:'مقارنة القرض المطلوب مع الحد الأعلى للتمويل المؤهل.'},
-  logicTitle:{en:'Cost & Financing Logic',ar:'منطق التكلفة والتمويل'},costUnitL:{en:'Cost per dunum / unit',ar:'التكلفة لكل دونم / وحدة'},logicCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},logicEligibleL:{en:'Maximum eligible financing (75%)',ar:'الحد الأعلى للتمويل المؤهل (75%)'},logicRequestedL:{en:'Requested loan',ar:'القرض المطلوب'},logicGapL:{en:'Amount above eligible limit',ar:'المبلغ الزائد عن حد الأهلية'},logicNote:{en:'The system compares the requested amount with the estimated project cost, the eligible financing ceiling, expected revenue, and risk level.',ar:'يقارن النظام القرض المطلوب بتكلفة المشروع المقدرة وسقف التمويل المؤهل والإيراد المتوقع ومستوى المخاطر.'},
+  mRecommendedL:{en:'Recommended loan',ar:'القرض المقترح'},mRecommendedD:{en:'Risk-adjusted amount after comparing the request with the estimated project cost.',ar:'مبلغ معدل حسب المخاطر بعد مقارنة القرض المطلوب بتكلفة المشروع المقدرة.'},mRequestedL:{en:'Requested loan',ar:'القرض المطلوب'},mRequestedD:{en:'Financing amount requested by the applicant.',ar:'مبلغ التمويل الذي طلبه مقدم الطلب.'},mCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},mCostD:{en:'Cost per unit multiplied by farm area or number of units.',ar:'تكلفة الوحدة مضروبة في مساحة المشروع أو عدد الوحدات.'},mFlagL:{en:'Over-financing ratio',ar:'نسبة التمويل الزائد'},mFlagD:{en:'Requested loan compared with the estimated project cost.',ar:'مقارنة القرض المطلوب مع تكلفة المشروع المقدرة.'},
+  logicTitle:{en:'Cost & Financing Logic',ar:'منطق التكلفة والتمويل'},costUnitL:{en:'Cost per dunum / unit',ar:'التكلفة لكل دونم / وحدة'},logicCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},logicRequestedL:{en:'Requested loan',ar:'القرض المطلوب'},logicGapL:{en:'Amount above estimated project cost',ar:'المبلغ الزائد عن تكلفة المشروع المقدرة'},logicNote:{en:'The system compares the requested loan with the estimated project cost, expected revenue, and risk level.',ar:'يقارن النظام القرض المطلوب بتكلفة المشروع المقدرة والإيراد المتوقع ومستوى المخاطر.'},
   repaymentL:{en:'Repayment plan',ar:'خطة السداد'},repaymentD:{en:'Suggested according to project type and repayment period.',ar:'تُقترح وفق نوع المشروع وفترة السداد.'},reasonsTitle:{en:'Why this result?',ar:'لماذا ظهرت هذه النتيجة؟'},footerText:{en:'Prototype decision-support system for ACC Jordan · AgriFin AI — HTU',ar:'نظام أولي لدعم قرارات مؤسسة الإقراض الزراعي في الأردن · AgriFin AI — جامعة الحسين التقنية'},
   loading:{en:'Analyzing the application…',ar:'جارٍ تحليل الطلب…'},success:{en:'Assessment completed successfully.',ar:'تم تحليل الطلب بنجاح.'},error:{en:'The assessment could not be completed. Please check the server and try again.',ar:'تعذر إكمال التقييم. تحقق من الخادم وحاول مرة أخرى.'}
 };
@@ -465,26 +464,12 @@ function localChatAnswer(question){
     );
   }
 
-  if(includesAny(q,['الحد الاعلى للتمويل المؤهل','التمويل المؤهل','75','eligible financing','maximum eligible financing'])){
-    if(data){
-      const cost=Number(data.estimated_project_cost_jod)||0;
-      const eligible=Number(data.max_eligible_financing_jod)||0;
-      return chatText(
-        `The maximum eligible financing is 75% of the estimated project cost. For the current application: ${chatMoney(cost)} × 75% = ${chatMoney(eligible)}.`,
-        `الحد الأعلى للتمويل المؤهل يساوي 75% من تكلفة المشروع المقدرة. في الطلب الحالي: ${chatMoney(cost)} × 75% = ${chatMoney(eligible)}.`
-      );
-    }
-    return chatText(
-      'The maximum eligible financing is calculated as 75% of the estimated project cost. Example: if the project cost is JD 2,000, the eligible limit is JD 1,500.',
-      'الحد الأعلى للتمويل المؤهل يُحسب بنسبة 75% من تكلفة المشروع المقدرة. مثال: إذا كانت تكلفة المشروع 2,000 دينار، يكون الحد المؤهل 1,500 دينار.'
-    );
-  }
 
   if(includesAny(q,['القرض المطلوب','requested loan'])){
     const requested=Number(currentFieldValue('requestedLoan'))||0;
     return chatText(
-      `The requested loan is the financing amount the farmer asks the institution to provide. It is compared with the estimated project cost, eligible financing limit, expected revenue, and risk level.${requested?` The entered amount is ${chatMoney(requested)}.`:''}`,
-      `القرض المطلوب هو مبلغ التمويل الذي يطلب المزارع من المؤسسة توفيره. يقارنه النظام مع تكلفة المشروع وحد التمويل المؤهل والإيراد المتوقع ودرجة المخاطر.${requested?` المبلغ المدخل حاليًا هو ${chatMoney(requested)}.`:''}`
+      `The requested loan is the financing amount the farmer asks the institution to provide. It is compared with the estimated project cost, expected revenue, and risk level.${requested?` The entered amount is ${chatMoney(requested)}.`:''}`,
+      `القرض المطلوب هو مبلغ التمويل الذي يطلب المزارع من المؤسسة توفيره. يقارنه النظام مع تكلفة المشروع والإيراد المتوقع ودرجة المخاطر.${requested?` المبلغ المدخل حاليًا هو ${chatMoney(requested)}.`:''}`
     );
   }
 
@@ -578,18 +563,18 @@ function localChatAnswer(question){
   if(includesAny(q,['القرض المقترح','التوصيه التمويليه','التوصية التمويلية','recommended loan','suggested loan'])){
     if(data){
       const requested=Number(data.requested_loan_jod)||0;
-      const eligible=Number(data.max_eligible_financing_jod)||0;
+      const cost=Number(data.estimated_project_cost_jod)||0;
       const recommended=Number(data.recommended_loan_jod)||0;
       const score=Number(data.risk_score)||0;
       const factor=score<40?'100%':score<70?'90%':'70%';
       return chatText(
-        `The recommended loan starts from the lower of the requested amount (${chatMoney(requested)}) and the eligible limit (${chatMoney(eligible)}), then applies the ${factor} risk adjustment. The current recommendation is ${chatMoney(recommended)}.`,
-        `يبدأ احتساب القرض المقترح من المبلغ الأقل بين القرض المطلوب (${chatMoney(requested)}) وحد التمويل المؤهل (${chatMoney(eligible)})، ثم يُطبق معامل المخاطر بنسبة ${factor}. التوصية الحالية هي ${chatMoney(recommended)}.`
+        `The recommended loan starts from the lower of the requested amount (${chatMoney(requested)}) and the estimated project cost (${chatMoney(cost)}), then applies the ${factor} risk adjustment. The current recommendation is ${chatMoney(recommended)}.`,
+        `يبدأ احتساب القرض المقترح من المبلغ الأقل بين القرض المطلوب (${chatMoney(requested)}) وتكلفة المشروع المقدرة (${chatMoney(cost)})، ثم يُطبق معامل المخاطر بنسبة ${factor}. التوصية الحالية هي ${chatMoney(recommended)}.`
       );
     }
     return chatText(
-      'The recommended loan uses the lower of the requested amount and the eligible financing limit, then applies a risk adjustment.',
-      'القرض المقترح يعتمد على المبلغ الأقل بين القرض المطلوب وحد التمويل المؤهل، ثم يُطبق عليه معامل المخاطر.'
+      'The recommended loan uses the lower of the requested amount and the estimated project cost, then applies a risk adjustment.',
+      'القرض المقترح يعتمد على المبلغ الأقل بين القرض المطلوب وتكلفة المشروع المقدرة، ثم يُطبق عليه معامل المخاطر.'
     );
   }
 
@@ -597,15 +582,15 @@ function localChatAnswer(question){
     if(data){
       const ratio=Number(data.overfinancing_ratio)||0;
       const requested=Number(data.requested_loan_jod)||0;
-      const eligible=Number(data.max_eligible_financing_jod)||0;
+      const cost=Number(data.estimated_project_cost_jod)||0;
       return chatText(
-        `The over-financing ratio compares the requested loan with the eligible financing limit: ${chatMoney(requested)} ÷ ${chatMoney(eligible)} = ${ratio.toFixed(2)}×. A value above 1 means the request exceeds the eligible limit.`,
-        `نسبة التمويل الزائد تقارن القرض المطلوب بحد التمويل المؤهل: ${chatMoney(requested)} ÷ ${chatMoney(eligible)} = ${ratio.toFixed(2)}×. إذا كانت النسبة أكبر من 1 فهذا يعني أن الطلب يتجاوز الحد المؤهل.`
+        `The over-financing ratio compares the requested loan with the estimated project cost: ${chatMoney(requested)} ÷ ${chatMoney(cost)} = ${ratio.toFixed(2)}×. A value above 1 means the request exceeds the estimated project cost.`,
+        `نسبة التمويل الزائد تقارن القرض المطلوب بتكلفة المشروع المقدرة: ${chatMoney(requested)} ÷ ${chatMoney(cost)} = ${ratio.toFixed(2)}×. إذا كانت النسبة أكبر من 1 فهذا يعني أن الطلب يتجاوز تكلفة المشروع المقدرة.`
       );
     }
     return chatText(
-      'The over-financing ratio equals the requested loan divided by the maximum eligible financing. A value above 1 means the request exceeds the eligible limit.',
-      'نسبة التمويل الزائد تساوي القرض المطلوب مقسومًا على الحد الأعلى للتمويل المؤهل. إذا كانت أكبر من 1 فهذا يعني أن الطلب يتجاوز الحد المؤهل.'
+      'The over-financing ratio equals the requested loan divided by the estimated project cost. A value above 1 means the request exceeds the estimated project cost.',
+      'نسبة التمويل الزائد تساوي القرض المطلوب مقسومًا على تكلفة المشروع المقدرة. إذا كانت أكبر من 1 فهذا يعني أن الطلب يتجاوز تكلفة المشروع المقدرة.'
     );
   }
 
@@ -664,8 +649,8 @@ function localChatAnswer(question){
   }
 
   return chatText(
-    'I can explain fields such as irrigation type, expected annual revenue, requested loan, farm area, water availability, cost per dunum or unit, risk score, estimated cost, eligible financing, recommended loan, over-financing ratio, and repayment plan. Please ask about one of them.',
-    'أستطيع شرح حقول مثل نوع الري، الإيراد السنوي المتوقع، القرض المطلوب، مساحة المزرعة، توفر المياه، التكلفة لكل دونم أو وحدة، درجة المخاطر، تكلفة المشروع، حد التمويل المؤهل، القرض المقترح، نسبة التمويل الزائد، وخطة السداد. اسألني عن أحدها.'
+    'I can explain fields such as irrigation type, expected annual revenue, requested loan, farm area, water availability, cost per dunum or unit, risk score, estimated project cost, recommended loan, over-financing ratio, and repayment plan. Please ask about one of them.',
+    'أستطيع شرح حقول مثل نوع الري، الإيراد السنوي المتوقع، القرض المطلوب، مساحة المزرعة، توفر المياه، التكلفة لكل دونم أو وحدة، درجة المخاطر، تكلفة المشروع المقدرة، القرض المقترح، نسبة التمويل الزائد، وخطة السداد. اسألني عن أحدها.'
   );
 }
 function submitChatMessage(message){
@@ -707,10 +692,9 @@ function showResult(data){
   $('resultContent').classList.add('visible');
   const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));
   const requested=Number(data.requested_loan_jod)||0;
-  const eligible=Number(data.max_eligible_financing_jod)||0;
   const recommended=Number(data.recommended_loan_jod)||0;
   const cost=Number(data.estimated_project_cost_jod)||0;
-  const gap=Math.max(0,requested-eligible);
+  const gap=Math.max(0,requested-cost);
   $('riskScore').textContent=score.toFixed(1).replace('.0','');
   const cls=(data.risk_class||'Low').toLowerCase();
   const ring=cls==='high'?'var(--bad)':cls==='medium'?'var(--warn)':'var(--good)';
@@ -720,16 +704,15 @@ function showResult(data){
   $('riskBadge').textContent=data.risk_class_label||data.risk_class;
   $('headlineLoan').textContent=money(recommended);
   $('decisionSummary').textContent=LANG==='ar'
-    ?`يوصي النموذج بقرض قدره ${money(recommended)} من أصل ${money(requested)} مطلوبة، بعد مقارنة تكلفة المشروع وحد التمويل المؤهل ودرجة المخاطر وعوامل المياه والإيراد وفترة السداد.`
-    :`The model recommends ${money(recommended)} from a requested ${money(requested)}, after comparing project cost, eligible financing, risk score, water, revenue, and repayment period.`;
+    ?`يوصي النموذج بقرض قدره ${money(recommended)} من أصل ${money(requested)} مطلوبة، بعد مقارنة القرض المطلوب بتكلفة المشروع ودرجة المخاطر وعوامل المياه والإيراد وفترة السداد.`
+    :`The model recommends ${money(recommended)} from a requested ${money(requested)}, after comparing the requested amount with project cost, risk score, water, revenue, and repayment period.`;
   $('mRecommended').textContent=money(recommended);
-  $('mEligible').textContent=money(eligible);
+  $('mRequested').textContent=money(requested);
   $('mCost').textContent=money(cost);
   const overRatio=Number(data.overfinancing_ratio)||0;
   $('mFlag').textContent=`${overRatio.toFixed(2).replace(/\.?0+$/,'')}×`;
   $('costUnit').textContent=money(data.cost_per_unit_jod);
   $('logicCost').textContent=money(cost);
-  $('logicEligible').textContent=money(eligible);
   $('logicRequested').textContent=money(requested);
   $('logicGap').textContent=money(gap);
   $('repaymentValue').textContent=data.repayment_plan||'—';
