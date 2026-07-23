@@ -221,7 +221,7 @@ def add_engineered_features(data: pd.DataFrame) -> pd.DataFrame:
     X = data.copy()
     eps = 1e-6
     X["loan_to_cost_ratio"] = X["requested_loan_jod"] / (X["estimated_project_cost_jod"] + eps)
-    X["eligible_to_requested_ratio"] = X["max_eligible_financing_jod"] / (X["requested_loan_jod"] + eps)
+    X["eligible_to_requested_ratio"] = X["estimated_project_cost_jod"] / (X["requested_loan_jod"] + eps)
     X["revenue_to_requested_ratio"] = X["expected_annual_revenue_jod"] / (X["requested_loan_jod"] + eps)
     X["revenue_to_cost_ratio"] = X["expected_annual_revenue_jod"] / (X["estimated_project_cost_jod"] + eps)
     X["area_to_loan_ratio"] = X["farm_area_dunum"] / (X["requested_loan_jod"] + eps)
@@ -240,10 +240,13 @@ def add_engineered_features(data: pd.DataFrame) -> pd.DataFrame:
     return X
 
 
-def rule_based_recommendation(row: pd.Series, risk_score: float) -> float:
+def rule_based_recommendation(
+    row: pd.Series,
+    risk_score: float
+) -> float:
     requested = float(row["requested_loan_jod"])
-    max_eligible = float(row["max_eligible_financing_jod"])
-    base = min(requested, max_eligible)
+    project_cost = float(row["estimated_project_cost_jod"])
+    base = min(requested, project_cost)
 
     if risk_score < 40:
         adjustment = 1.00
@@ -253,8 +256,9 @@ def rule_based_recommendation(row: pd.Series, risk_score: float) -> float:
         adjustment = 0.70
 
     rec = base * adjustment
-    rec = min(rec, requested, max_eligible)
+    rec = min(rec, requested, project_cost)
     rec = max(rec, 0)
+
     return safe_round_50(rec)
 
 
@@ -280,9 +284,12 @@ def build_application(payload: Dict[str, Any]) -> Dict[str, Any]:
     estimated_units = max(area, 0)
     unit_type = "رأس" if crop_en == "Sheep Goats" else "دونم"
     estimated_project_cost = max(0.0, unit_cost * estimated_units)
-    max_eligible = estimated_project_cost * 0.75
-    over_ratio = requested / max(max_eligible, 1)
-    over_flag = "Yes" if requested > max_eligible and max_eligible > 0 else "No"
+    over_ratio = requested / max(estimated_project_cost, 1)
+    over_flag = (
+    "Yes"
+    if requested > estimated_project_cost and estimated_project_cost > 0
+    else "No"
+    )
 
     repayment_freq = repayment_frequency(project_type_en, years, requested)
     authority = approval_authority(requested)
@@ -307,7 +314,7 @@ def build_application(payload: Dict[str, Any]) -> Dict[str, Any]:
         "unit_type": unit_type,
         "cost_per_unit_jod": unit_cost,
         "estimated_project_cost_jod": estimated_project_cost,
-        "max_eligible_financing_jod": max_eligible,
+        "max_eligible_financing_jod": estimated_project_cost,
         "requested_loan_jod": requested,
         "expected_annual_revenue_jod": revenue,
         "financing_method": payload.get("financingMethod", "فائدة"),
@@ -360,11 +367,20 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
             reasons.append({"level": "good", "text": "الزراعة المحمية تقلل جزءًا من التعرض للمخاطر المناخية."})
 
         if over_ratio > 1.15:
-            reasons.append({"level": "risk", "text": "قيمة القرض المطلوبة أعلى من حد التمويل المؤهل حسب التكلفة المقدرة."})
+            reasons.append({
+        "level": "risk",
+        "text": "The requested loan is higher than the estimated project cost."
+    })
         elif over_ratio > 0.90:
-            reasons.append({"level": "mid", "text": "قيمة القرض المطلوبة قريبة من الحد الأعلى للتمويل المؤهل."})
+            reasons.append({
+        "level": "mid",
+        "text": "The requested loan is close to the full estimated project cost."
+    })
         else:
-            reasons.append({"level": "good", "text": "قيمة القرض المطلوبة ضمن القدرة التمويلية المقدرة."})
+            reasons.append({
+        "level": "good",
+        "text": "The requested loan is within the estimated project cost."
+    })
 
         if rev_ratio < 1.0:
             reasons.append({"level": "risk", "text": "الإيراد السنوي المتوقع ضعيف مقارنة بقيمة القرض المطلوبة."})
@@ -457,7 +473,6 @@ def predict_application(payload: Dict[str, Any]) -> Dict[str, Any]:
         "risk_class_label": RISK_LABELS[lang][risk_class_final],
         "recommended_loan_jod": recommended_final,
         "estimated_project_cost_jod": float(row["estimated_project_cost_jod"]),
-        "max_eligible_financing_jod": float(row["max_eligible_financing_jod"]),
         "cost_per_unit_jod": float(row["cost_per_unit_jod"]),
         "requested_loan_jod": float(row["requested_loan_jod"]),
         "expected_annual_revenue_jod": float(row["expected_annual_revenue_jod"]),
