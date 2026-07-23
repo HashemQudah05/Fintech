@@ -221,6 +221,8 @@ def add_engineered_features(data: pd.DataFrame) -> pd.DataFrame:
     X = data.copy()
     eps = 1e-6
     X["loan_to_cost_ratio"] = X["requested_loan_jod"] / (X["estimated_project_cost_jod"] + eps)
+    # Legacy feature name retained temporarily for compatibility with the current model bundle.
+    # Its value now represents estimated project cost relative to the requested loan.
     X["eligible_to_requested_ratio"] = X["estimated_project_cost_jod"] / (X["requested_loan_jod"] + eps)
     X["revenue_to_requested_ratio"] = X["expected_annual_revenue_jod"] / (X["requested_loan_jod"] + eps)
     X["revenue_to_cost_ratio"] = X["expected_annual_revenue_jod"] / (X["estimated_project_cost_jod"] + eps)
@@ -286,9 +288,9 @@ def build_application(payload: Dict[str, Any]) -> Dict[str, Any]:
     estimated_project_cost = max(0.0, unit_cost * estimated_units)
     over_ratio = requested / max(estimated_project_cost, 1)
     over_flag = (
-    "Yes"
-    if requested > estimated_project_cost and estimated_project_cost > 0
-    else "No"
+        "Yes"
+        if requested > estimated_project_cost and estimated_project_cost > 0
+        else "No"
     )
 
     repayment_freq = repayment_frequency(project_type_en, years, requested)
@@ -314,6 +316,8 @@ def build_application(payload: Dict[str, Any]) -> Dict[str, Any]:
         "unit_type": unit_type,
         "cost_per_unit_jod": unit_cost,
         "estimated_project_cost_jod": estimated_project_cost,
+        # Legacy field retained temporarily for compatibility with the current model bundle.
+        # No 75% financing calculation is applied.
         "max_eligible_financing_jod": estimated_project_cost,
         "requested_loan_jod": requested,
         "expected_annual_revenue_jod": revenue,
@@ -368,19 +372,19 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
 
         if over_ratio > 1.15:
             reasons.append({
-        "level": "risk",
-        "text": "The requested loan is higher than the estimated project cost."
-    })
+                "level": "risk",
+                "text": "قيمة القرض المطلوبة أعلى من تكلفة المشروع المقدرة."
+            })
         elif over_ratio > 0.90:
             reasons.append({
-        "level": "mid",
-        "text": "The requested loan is close to the full estimated project cost."
-    })
+                "level": "mid",
+                "text": "قيمة القرض المطلوبة قريبة من كامل تكلفة المشروع المقدرة."
+            })
         else:
             reasons.append({
-        "level": "good",
-        "text": "The requested loan is within the estimated project cost."
-    })
+                "level": "good",
+                "text": "قيمة القرض المطلوبة ضمن تكلفة المشروع المقدرة."
+            })
 
         if rev_ratio < 1.0:
             reasons.append({"level": "risk", "text": "الإيراد السنوي المتوقع ضعيف مقارنة بقيمة القرض المطلوبة."})
@@ -421,11 +425,20 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
         reasons.append({"level": "good", "text": "Controlled/greenhouse production reduces some climate exposure."})
 
     if over_ratio > 1.15:
-        reasons.append({"level": "risk", "text": "The requested loan is higher than the estimated eligible financing limit."})
+        reasons.append({
+            "level": "risk",
+            "text": "The requested loan is higher than the estimated project cost."
+        })
     elif over_ratio > 0.90:
-        reasons.append({"level": "mid", "text": "The requested loan is close to the maximum eligible financing amount."})
+        reasons.append({
+            "level": "mid",
+            "text": "The requested loan is close to the full estimated project cost."
+        })
     else:
-        reasons.append({"level": "good", "text": "The requested loan is within the estimated financing capacity."})
+        reasons.append({
+            "level": "good",
+            "text": "The requested loan is within the estimated project cost."
+        })
 
     if rev_ratio < 1.0:
         reasons.append({"level": "risk", "text": "Expected revenue is weak compared with the requested loan."})
