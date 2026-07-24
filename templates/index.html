@@ -360,7 +360,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
   <div class="chat-note" id="chatNote">Field and result explanations are available.</div>
 </aside>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <script>
 const THEME_KEY='agrifin-theme';
 const LANG_KEY='agrifin-lang';
@@ -764,85 +764,297 @@ function reportFileName(extension){
   return `AgriFin-Risk-Report_${stamp}.${extension}`;
 }
 
-async function exportReportPdf(){
-  if(!LAST_ASSESSMENT){alert(tr('exportNoResult'));return}
-  const button=$('exportPdfBtn');
-  const label=$('exportPdfText');
-  const original=label.textContent;
-  try{
-    button.disabled=true;
-    label.textContent=tr('exportPdfWorking');
-    if(typeof html2pdf==='undefined')throw new Error('html2pdf library is unavailable');
-    const background=getComputedStyle(document.body).backgroundColor;
-    await html2pdf().set({
-      margin:[7,7,7,7],
-      filename:reportFileName('pdf'),
-      image:{type:'jpeg',quality:.98},
-      html2canvas:{
-        scale:2,
-        useCORS:true,
-        scrollX:0,
-        scrollY:0,
-        backgroundColor:background,
-        ignoreElements:element=>element.classList&&element.classList.contains('no-export')
-      },
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['css','legacy'],avoid:['.score-wrap','.metric','.logic-card','.decision-item','.reason']}
-    }).from($('resultPanel')).save();
-  }catch(error){
-    console.error('PDF export error:',error);
-    alert(tr('exportError'));
-  }finally{
-    button.disabled=false;
-    label.textContent=original;
-  }
+function reportLabels(){
+  return LANG==='ar'?{
+    title:'تقرير تقييم مخاطر التمويل الزراعي',
+    subtitle:'AgriFin AI · نظام دعم قرار لمؤسسة الإقراض الزراعي',
+    generated:'تاريخ إنشاء التقرير',
+    application:'بيانات الطلب والمشروع',
+    summary:'ملخص القرار الائتماني',
+    logic:'منطق التكلفة والتمويل',
+    repayment:'خطة السداد المقترحة',
+    reasons:'أسباب النتيجة',
+    governorate:'المحافظة',project:'نوع المشروع',activity:'المحصول أو النشاط',
+    irrigation:'نوع الري',water:'توفر المياه',area:'مساحة المشروع / الوحدات',
+    years:'فترة السداد',firstTime:'مقترض لأول مرة؟',method:'طريقة التمويل',
+    score:'درجة المخاطر',risk:'تصنيف المخاطر',recommended:'القرض المقترح',
+    requested:'القرض المطلوب',cost:'تكلفة المشروع المقدرة',ratio:'نسبة التمويل الزائد',
+    unitCost:'التكلفة لكل دونم / وحدة',gap:'المبلغ الزائد عن تكلفة المشروع المقدرة',
+    yearUnit:'سنة',
+    disclaimer:'هذا التقرير أداة مساندة لموظف الإقراض ولا يمثل قرار الموافقة النهائي للمؤسسة.'
+  }:{
+    title:'Agricultural Financing Risk Assessment Report',
+    subtitle:'AgriFin AI · Decision Support for the Agricultural Credit Corporation',
+    generated:'Report generated',
+    application:'Application & Project Information',
+    summary:'Credit Decision Summary',
+    logic:'Cost & Financing Logic',
+    repayment:'Recommended Repayment Plan',
+    reasons:'Reasons Behind the Result',
+    governorate:'Governorate',project:'Project type',activity:'Crop or activity',
+    irrigation:'Irrigation type',water:'Water availability',area:'Project area / units',
+    years:'Repayment period',firstTime:'First-time borrower?',method:'Financing method',
+    score:'Risk score',risk:'Risk classification',recommended:'Recommended loan',
+    requested:'Requested loan',cost:'Estimated project cost',ratio:'Over-financing ratio',
+    unitCost:'Cost per dunum / unit',gap:'Amount above estimated project cost',
+    yearUnit:'years',
+    disclaimer:'This report supports the lending officer and does not represent the institution’s final approval decision.'
+  };
 }
 
-function exportReportWord(){
-  if(!LAST_ASSESSMENT){alert(tr('exportNoResult'));return}
+function reportDate(){
+  return new Intl.DateTimeFormat(LANG==='ar'?'ar-JO':'en-GB',{
+    year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'
+  }).format(new Date());
+}
+
+function getReportModel(){
+  if(!LAST_ASSESSMENT)return null;
+  const l=reportLabels();
+  const data=LAST_ASSESSMENT;
+  const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));
+  const requested=Number(data.requested_loan_jod)||0;
+  const recommended=Number(data.recommended_loan_jod)||0;
+  const cost=Number(data.estimated_project_cost_jod)||0;
+  const ratio=Number(data.overfinancing_ratio)||0;
+  const gap=Math.max(0,requested-cost);
+  const riskClass=String(data.risk_class||'Low').toLowerCase();
+  const riskColor=riskClass==='high'?'B54141':riskClass==='medium'?'B88922':'1E7B3C';
+  const period=Number(currentFieldValue('periodYears'))||0;
+  return {
+    l,
+    lang:LANG,
+    dir:LANG==='ar'?'rtl':'ltr',
+    generatedAt:reportDate(),
+    riskClass,
+    riskColor,
+    score:score.toFixed(1).replace('.0',''),
+    riskLabel:data.risk_class_label||data.risk_class||'—',
+    applicationRows:[
+      [l.governorate,currentFieldValue('governorate')||'—'],
+      [l.project,currentFieldValue('projectType')||'—'],
+      [l.activity,currentFieldValue('cropActivity')||'—'],
+      [l.irrigation,currentFieldValue('irrigationType')||'—'],
+      [l.water,currentFieldValue('waterAvailability')||'—'],
+      [l.area,currentFieldValue('farmArea')||'—'],
+      [l.years,period?`${period} ${l.yearUnit}`:'—'],
+      [l.firstTime,currentFieldValue('firstTime')||'—'],
+      [l.method,currentFieldValue('financingMethod')||'—']
+    ],
+    summaryRows:[
+      [l.score,`${score.toFixed(1).replace('.0','')} / 100`],
+      [l.risk,data.risk_class_label||data.risk_class||'—'],
+      [l.recommended,money(recommended)],
+      [l.requested,money(requested)],
+      [l.cost,money(cost)],
+      [l.ratio,`${ratio.toFixed(2).replace(/\.?0+$/,'')}×`]
+    ],
+    logicRows:[
+      [l.unitCost,money(data.cost_per_unit_jod)],
+      [l.cost,money(cost)],
+      [l.requested,money(requested)],
+      [l.gap,money(gap)]
+    ],
+    repayment:data.repayment_plan||'—',
+    reasons:(data.risk_reasons||[]).map(item=>({
+      text:String(item.text||''),
+      level:String(item.level||'')
+    })).filter(item=>item.text)
+  };
+}
+
+function reportTableHtml(rows){
+  return `<table class="report-table"><tbody>${rows.map(([label,value])=>
+    `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`
+  ).join('')}</tbody></table>`;
+}
+
+function buildPrintableReportHtml(model){
+  const reasonHtml=model.reasons.map(item=>{
+    const tone=item.level==='risk'?'risk':item.level==='good'?'good':item.level==='mid'?'mid':'neutral';
+    return `<li class="${tone}">${escapeHtml(item.text)}</li>`;
+  }).join('');
+  const title=reportFileName('').replace(/\.$/,'');
+  return `<!DOCTYPE html>
+<html lang="${model.lang}" dir="${model.dir}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+@page{size:A4;margin:12mm}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:#1f2a1f;font-family:Arial,Tahoma,sans-serif}
+body{direction:${model.dir};-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.report{width:100%;max-width:190mm;margin:0 auto}
+.report-header{background:#0a3a1e;color:#fff;border-radius:10px 10px 0 0;padding:18px 20px;border-bottom:5px solid #c8a24b}
+.report-brand{font-size:12px;font-weight:700;color:#e0be6a;letter-spacing:.5px}
+.report-header h1{font-size:24px;margin:7px 0 6px}.report-header p{margin:0;font-size:11px;opacity:.88}
+.generated{padding:9px 2px 13px;color:#5a6b5a;font-size:10px;border-bottom:1px solid #dde7da}
+.section{margin-top:14px;break-inside:avoid}.section h2{font-size:15px;margin:0 0 8px;color:#0a3a1e;border-inline-start:4px solid #c8a24b;padding-inline-start:9px}
+.report-table{width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #dde7da;border-radius:8px;overflow:hidden}
+.report-table th,.report-table td{padding:9px 11px;border-bottom:1px solid #dde7da;font-size:11px;text-align:${model.dir==='rtl'?'right':'left'};vertical-align:top}
+.report-table tr:last-child th,.report-table tr:last-child td{border-bottom:0}.report-table th{width:42%;background:#f3f7f1;color:#5a6b5a;font-weight:700}.report-table td{font-weight:700}
+.score-card{display:grid;grid-template-columns:140px 1fr;gap:14px;border:1px solid #dde7da;border-radius:10px;padding:14px;background:#fbfdf9;align-items:center}
+.score-box{text-align:center;border-inline-end:1px solid #dde7da;padding-inline-end:14px}.score-number{font-size:38px;font-weight:900;color:#${model.riskColor};line-height:1}.score-out{font-size:10px;color:#5a6b5a;margin-top:4px}.risk-pill{display:inline-block;background:#${model.riskColor};color:#fff;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;margin-bottom:8px}.loan-big{font-size:22px;font-weight:900;color:#0f6b33;margin:3px 0 6px}.summary-text{font-size:11px;color:#5a6b5a;line-height:1.7}
+.repayment{border:1px solid #cfe2cd;background:#edf6eb;border-radius:9px;padding:12px 14px;font-size:12px}.repayment b{display:block;color:#5a6b5a;font-size:10px;margin-bottom:5px}.repayment strong{font-size:16px;color:#0a3a1e}
+.reasons{list-style:none;margin:0;padding:0;display:grid;gap:7px}.reasons li{border:1px solid #dde7da;border-inline-start:4px solid #4f82ad;background:#fbfdf9;border-radius:7px;padding:8px 10px;font-size:11px;line-height:1.6;break-inside:avoid}.reasons li.good{border-inline-start-color:#1e7b3c}.reasons li.mid{border-inline-start-color:#b88922}.reasons li.risk{border-inline-start-color:#b54141}
+.footer-note{margin-top:16px;border-top:1px solid #dde7da;padding-top:9px;color:#6b776a;font-size:9px;line-height:1.5}
+@media print{body{background:#fff}.report{max-width:none}.section{break-inside:avoid}.report-table tr,.reasons li{break-inside:avoid}}
+</style>
+</head>
+<body>
+<article class="report">
+  <header class="report-header">
+    <div class="report-brand">AGRIFIN AI</div>
+    <h1>${escapeHtml(model.l.title)}</h1>
+    <p>${escapeHtml(model.l.subtitle)}</p>
+  </header>
+  <div class="generated">${escapeHtml(model.l.generated)}: ${escapeHtml(model.generatedAt)}</div>
+
+  <section class="section">
+    <h2>${escapeHtml(model.l.summary)}</h2>
+    <div class="score-card">
+      <div class="score-box"><div class="score-number">${escapeHtml(model.score)}</div><div class="score-out">/ 100</div></div>
+      <div><span class="risk-pill">${escapeHtml(model.riskLabel)}</span><div class="loan-big">${escapeHtml(model.summaryRows[2][1])}</div><div class="summary-text">${escapeHtml(model.l.recommended)} · ${escapeHtml(model.l.risk)}: ${escapeHtml(model.riskLabel)}</div></div>
+    </div>
+    <div style="height:8px"></div>
+    ${reportTableHtml(model.summaryRows)}
+  </section>
+
+  <section class="section"><h2>${escapeHtml(model.l.application)}</h2>${reportTableHtml(model.applicationRows)}</section>
+  <section class="section"><h2>${escapeHtml(model.l.logic)}</h2>${reportTableHtml(model.logicRows)}</section>
+  <section class="section"><h2>${escapeHtml(model.l.repayment)}</h2><div class="repayment"><b>${escapeHtml(model.l.repayment)}</b><strong>${escapeHtml(model.repayment)}</strong></div></section>
+  <section class="section"><h2>${escapeHtml(model.l.reasons)}</h2><ul class="reasons">${reasonHtml||'<li>—</li>'}</ul></section>
+  <div class="footer-note">${escapeHtml(model.l.disclaimer)}</div>
+</article>
+<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),350));window.onafterprint=()=>window.close();<\/script>
+</body>
+</html>`;
+}
+
+function exportReportPdf(){
+  const model=getReportModel();
+  if(!model){alert(tr('exportNoResult'));return}
+  const reportWindow=window.open('','_blank');
+  if(!reportWindow){alert(tr('exportError'));return}
+  reportWindow.document.open();
+  reportWindow.document.write(buildPrintableReportHtml(model));
+  reportWindow.document.close();
+}
+
+function wordTextParagraph(text,{bold=false,size=20,color='1F2A1F',alignRight=false,spacingAfter=80}={}){
+  const {Paragraph,TextRun,AlignmentType}=window.docx;
+  return new Paragraph({
+    alignment:alignRight?AlignmentType.RIGHT:AlignmentType.LEFT,
+    bidirectional:LANG==='ar',
+    spacing:{after:spacingAfter},
+    children:[new TextRun({text:String(text),bold,size,color,font:'Arial',rightToLeft:LANG==='ar'})]
+  });
+}
+
+function wordTable(rows,headerFill='F3F7F1'){
+  const {Table,TableRow,TableCell,Paragraph,TextRun,WidthType,BorderStyle,AlignmentType,TableLayoutType,VerticalAlign}=window.docx;
+  const borders={top:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},bottom:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},left:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},right:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},insideVertical:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'}};
+  const cellParagraph=(text,bold,color)=>new Paragraph({
+    alignment:LANG==='ar'?AlignmentType.RIGHT:AlignmentType.LEFT,
+    bidirectional:LANG==='ar',
+    spacing:{before:30,after:30},
+    children:[new TextRun({text:String(text),bold,size:19,color,font:'Arial',rightToLeft:LANG==='ar'})]
+  });
+  return new Table({
+    width:{size:100,type:WidthType.PERCENTAGE},
+    layout:TableLayoutType.FIXED,
+    borders,
+    rows:rows.map(([label,value])=>new TableRow({children:[
+      new TableCell({width:{size:42,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,shading:{fill:headerFill},margins:{top:90,bottom:90,left:110,right:110},children:[cellParagraph(label,true,'5A6B5A')]}),
+      new TableCell({width:{size:58,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,margins:{top:90,bottom:90,left:110,right:110},children:[cellParagraph(value,true,'1F2A1F')]})
+    ]}))
+  });
+}
+
+async function exportReportWord(){
+  const model=getReportModel();
+  if(!model){alert(tr('exportNoResult'));return}
   const button=$('exportWordBtn');
   const label=$('exportWordText');
   const original=label.textContent;
   try{
     button.disabled=true;
     label.textContent=tr('exportWordWorking');
-    const clone=$('resultPanel').cloneNode(true);
-    clone.querySelectorAll('.no-export,.empty-state').forEach(element=>element.remove());
-    clone.style.position='static';
-    clone.style.top='auto';
-    clone.style.width='100%';
-    clone.style.boxShadow='none';
-
-    const css=document.querySelector('style').textContent;
-    const direction=LANG==='ar'?'rtl':'ltr';
-    const language=LANG==='ar'?'ar':'en';
-    const documentHtml=`<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
-      xmlns:w="urn:schemas-microsoft-com:office:word"
-      xmlns="http://www.w3.org/TR/REC-html40"
-      lang="${language}" dir="${direction}">
-<head>
-<meta charset="UTF-8">
-<style>
-${css}
-html,body{background:#ffffff!important;color:#1f2a1f!important;direction:${direction};}
-body{margin:0;padding:18px;font-family:Arial,Tahoma,sans-serif;}
-.result-panel{position:static!important;top:auto!important;box-shadow:none!important;border:1px solid #dde7da!important;}
-.no-export,.empty-state{display:none!important;}
-</style>
-</head>
-<body dir="${direction}">${clone.outerHTML}</body>
-</html>`;
-
-    const blob=new Blob(['\ufeff',documentHtml],{type:'application/msword;charset=utf-8'});
+    if(!window.docx)throw new Error('DOCX library is unavailable');
+    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,ShadingType,VerticalAlign,PageOrientation}=window.docx;
+    const align=LANG==='ar'?AlignmentType.RIGHT:AlignmentType.LEFT;
+    const sectionTitle=text=>new Paragraph({
+      alignment:align,bidirectional:LANG==='ar',spacing:{before:220,after:100},
+      border:{left:LANG==='ar'?undefined:{style:BorderStyle.SINGLE,size:16,color:'C8A24B'},right:LANG==='ar'?{style:BorderStyle.SINGLE,size:16,color:'C8A24B'}:undefined},
+      children:[new TextRun({text,bold:true,size:27,color:'0A3A1E',font:'Arial',rightToLeft:LANG==='ar'})]
+    });
+    const headerTable=new Table({
+      width:{size:100,type:WidthType.PERCENTAGE},
+      borders:{top:{style:BorderStyle.NIL},bottom:{style:BorderStyle.NIL},left:{style:BorderStyle.NIL},right:{style:BorderStyle.NIL},insideHorizontal:{style:BorderStyle.NIL},insideVertical:{style:BorderStyle.NIL}},
+      rows:[new TableRow({children:[new TableCell({
+        shading:{fill:'0A3A1E',type:ShadingType.CLEAR},verticalAlign:VerticalAlign.CENTER,
+        margins:{top:220,bottom:220,left:240,right:240},
+        children:[
+          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:50},children:[new TextRun({text:'AGRIFIN AI',bold:true,size:20,color:'E0BE6A',font:'Arial'})]}),
+          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:55},children:[new TextRun({text:model.l.title,bold:true,size:34,color:'FFFFFF',font:'Arial',rightToLeft:LANG==='ar'})]}),
+          new Paragraph({alignment:align,bidirectional:LANG==='ar',children:[new TextRun({text:model.l.subtitle,size:19,color:'E8F0E6',font:'Arial',rightToLeft:LANG==='ar'})]})
+        ]
+      })]})]
+    });
+    const scoreTable=new Table({
+      width:{size:100,type:WidthType.PERCENTAGE},
+      borders:{top:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},bottom:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},left:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},right:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},insideHorizontal:{style:BorderStyle.NIL},insideVertical:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'}},
+      rows:[new TableRow({children:[
+        new TableCell({width:{size:32,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,shading:{fill:'FBFDF9'},margins:{top:170,bottom:170,left:120,right:120},children:[
+          new Paragraph({alignment:AlignmentType.CENTER,bidirectional:LANG==='ar',spacing:{after:40},children:[new TextRun({text:model.score,bold:true,size:54,color:model.riskColor,font:'Arial'})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'/ 100',size:18,color:'5A6B5A',font:'Arial'})]})
+        ]}),
+        new TableCell({width:{size:68,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,margins:{top:170,bottom:170,left:170,right:170},children:[
+          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:65},children:[new TextRun({text:model.riskLabel,bold:true,size:22,color:model.riskColor,font:'Arial',rightToLeft:LANG==='ar'})]}),
+          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:45},children:[new TextRun({text:model.summaryRows[2][1],bold:true,size:34,color:'0F6B33',font:'Arial',rightToLeft:LANG==='ar'})]}),
+          new Paragraph({alignment:align,bidirectional:LANG==='ar',children:[new TextRun({text:`${model.l.recommended} · ${model.l.risk}: ${model.riskLabel}`,size:18,color:'5A6B5A',font:'Arial',rightToLeft:LANG==='ar'})]})
+        ]})
+      ]})]
+    });
+    const repaymentTable=new Table({
+      width:{size:100,type:WidthType.PERCENTAGE},
+      borders:{top:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},bottom:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},left:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},right:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},insideHorizontal:{style:BorderStyle.NIL},insideVertical:{style:BorderStyle.NIL}},
+      rows:[new TableRow({children:[new TableCell({shading:{fill:'EDF6EB'},margins:{top:150,bottom:150,left:170,right:170},children:[
+        wordTextParagraph(model.l.repayment,{bold:true,size:18,color:'5A6B5A',alignRight:LANG==='ar',spacingAfter:55}),
+        wordTextParagraph(model.repayment,{bold:true,size:27,color:'0A3A1E',alignRight:LANG==='ar',spacingAfter:0})
+      ]})]})]
+    });
+    const reasonParagraphs=(model.reasons.length?model.reasons:[{text:'—',level:''}]).map(item=>new Paragraph({
+      alignment:align,bidirectional:LANG==='ar',spacing:{after:90},indent:{left:180,right:LANG==='ar'?180:0},
+      border:{left:LANG==='ar'?undefined:{style:BorderStyle.SINGLE,size:12,color:item.level==='risk'?'B54141':item.level==='good'?'1E7B3C':'4F82AD'},right:LANG==='ar'?{style:BorderStyle.SINGLE,size:12,color:item.level==='risk'?'B54141':item.level==='good'?'1E7B3C':'4F82AD'}:undefined},
+      shading:{fill:'FBFDF9'},
+      children:[new TextRun({text:`• ${item.text}`,size:19,color:'1F2A1F',font:'Arial',rightToLeft:LANG==='ar'})]
+    }));
+    const children=[
+      headerTable,
+      wordTextParagraph(`${model.l.generated}: ${model.generatedAt}`,{size:17,color:'5A6B5A',alignRight:LANG==='ar',spacingAfter:140}),
+      sectionTitle(model.l.summary),scoreTable,new Paragraph({spacing:{after:80}}),wordTable(model.summaryRows),
+      sectionTitle(model.l.application),wordTable(model.applicationRows),
+      sectionTitle(model.l.logic),wordTable(model.logicRows),
+      sectionTitle(model.l.repayment),repaymentTable,
+      sectionTitle(model.l.reasons),...reasonParagraphs,
+      new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{before:180},border:{top:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'}},children:[new TextRun({text:model.l.disclaimer,size:15,color:'6B776A',font:'Arial',rightToLeft:LANG==='ar'})]})
+    ];
+    const documentFile=new Document({
+      styles:{default:{document:{run:{font:'Arial',size:20,color:'1F2A1F'},paragraph:{spacing:{line:300}}}}},
+      sections:[{properties:{page:{size:{orientation:PageOrientation.PORTRAIT},margin:{top:720,right:720,bottom:720,left:720}}},children}]
+    });
+    const blob=await Packer.toBlob(documentFile);
     const url=URL.createObjectURL(blob);
     const link=document.createElement('a');
     link.href=url;
-    link.download=reportFileName('doc');
+    link.download=reportFileName('docx');
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
   }catch(error){
     console.error('Word export error:',error);
     alert(tr('exportError'));
