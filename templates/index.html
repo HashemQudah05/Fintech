@@ -6,205 +6,732 @@
 <meta name="description" content="AgriFin AI agricultural loan assessment and decision-support platform for ACC Jordan.">
 <title>AgriFin AI — Agricultural Loan Assessment</title>
 <style>
-:root,[data-theme="light"]{
-  --bg:#eef3ec;--card:#fff;--ink:#1f2a1f;--ink-soft:#5a6b5a;--line:#dde7da;
-  --brand:#0f6b33;--brand-deep:#0a3a1e;--brand-soft:#dff0e0;--gold:#c8a24b;
-  --good:#1e7b3c;--warn:#b88922;--bad:#b54141;--info:#4f82ad;--hdr-ink:#fff;
-  --shadow:0 8px 24px rgba(15,55,25,.09);--field:#fbfdf9;--focus:#0f6b33;
+:root,[data-theme="light"] {
+  --bg:#eef3ec;
+  --card:#fff;
+  --ink:#1f2a1f;
+  --ink-soft:#5a6b5a;
+  --line:#dde7da;
+  --brand:#0f6b33;
+  --brand-deep:#0a3a1e;
+  --brand-soft:#dff0e0;
+  --gold:#c8a24b;
+  --good:#1e7b3c;
+  --warn:#b88922;
+  --bad:#b54141;
+  --info:#4f82ad;
+  --hdr-ink:#fff;
+  --shadow:0 8px 24px rgba(15,55,25,.09);
+  --field:#fbfdf9;
+  --focus:#0f6b33;
 }
-[data-theme="dark"]{
-  --bg:#101710;--card:#1b241c;--ink:#e8f0e6;--ink-soft:#9aad98;--line:#2c3a2d;
-  --brand:#0d3d1f;--brand-deep:#07240f;--brand-soft:#20301f;--gold:#e0be6a;
-  --good:#4cc474;--warn:#e0be6a;--bad:#e06666;--info:#7faedd;--hdr-ink:#e8f0e6;
-  --shadow:0 8px 26px rgba(0,0,0,.32);--field:#151d16;--focus:#e0be6a;
+[data-theme="dark"] {
+  --bg:#101710;
+  --card:#1b241c;
+  --ink:#e8f0e6;
+  --ink-soft:#9aad98;
+  --line:#2c3a2d;
+  --brand:#0d3d1f;
+  --brand-deep:#07240f;
+  --brand-soft:#20301f;
+  --gold:#e0be6a;
+  --good:#4cc474;
+  --warn:#e0be6a;
+  --bad:#e06666;
+  --info:#7faedd;
+  --hdr-ink:#e8f0e6;
+  --shadow:0 8px 26px rgba(0,0,0,.32);
+  --field:#151d16;
+  --focus:#e0be6a;
 }
-[data-theme="cb"]{
-  --bg:#f7f7f5;--card:#fff;--ink:#1a1a1a;--ink-soft:#4d4d4d;--line:#dcdcd8;
-  --brand:#00654a;--brand-deep:#00402e;--brand-soft:#d6efe7;--gold:#e69f00;
-  --good:#009e73;--warn:#e69f00;--bad:#0072b2;--info:#56b4e9;--hdr-ink:#fff;
-  --shadow:0 8px 24px rgba(0,0,0,.10);--field:#fff;--focus:#0072b2;
+[data-theme="cb"] {
+  --bg:#f7f7f5;
+  --card:#fff;
+  --ink:#1a1a1a;
+  --ink-soft:#4d4d4d;
+  --line:#dcdcd8;
+  --brand:#00654a;
+  --brand-deep:#00402e;
+  --brand-soft:#d6efe7;
+  --gold:#e69f00;
+  --good:#009e73;
+  --warn:#e69f00;
+  --bad:#0072b2;
+  --info:#56b4e9;
+  --hdr-ink:#fff;
+  --shadow:0 8px 24px rgba(0,0,0,.10);
+  --field:#fff;
+  --focus:#0072b2;
 }
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
-body[dir="rtl"]{font-family:Tahoma,"Segoe UI",system-ui,sans-serif}
-a{color:inherit}
-button,input,select{font:inherit}
-header{position:sticky;top:0;z-index:60;background:linear-gradient(135deg,var(--brand-deep),var(--brand));color:var(--hdr-ink);border-bottom:4px solid var(--gold);box-shadow:0 4px 18px rgba(0,0,0,.12)}
-.header-inner{max-width:1500px;margin:auto;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.logo{width:52px;height:52px;border-radius:8px;background:#fff;padding:3px;object-fit:contain;flex:none}
-.brand h1{margin:0;font-size:21px;line-height:1.1}.brand p{margin:3px 0 0;font-size:12.5px;opacity:.9}
-.nav{margin-inline-start:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.nav-link,.btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;background:transparent;color:var(--hdr-ink);border:1px solid rgba(255,255,255,.42);border-radius:7px;padding:7px 11px;font-size:12.5px;cursor:pointer;min-height:34px}
-.nav-link:hover,.btn-ghost:hover{background:rgba(255,255,255,.14)}
-.nav-link.dashboard{border-color:var(--gold);background:rgba(200,162,75,.18);font-weight:700}
-.seg{display:flex;border:1px solid rgba(255,255,255,.45);border-radius:8px;overflow:hidden}
-.seg button{border:0;background:transparent;color:var(--hdr-ink);padding:7px 10px;font-size:12px;cursor:pointer}
-.seg button.active{background:var(--gold);color:#1f2a1f;font-weight:800}
-main{max-width:1500px;margin:0 auto;padding:22px}
-.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:18px;margin-bottom:18px}
-.hero-copy,.hero-card,.panel,.result-panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
-.hero-copy{padding:26px;background:linear-gradient(145deg,var(--card),var(--brand-soft))}
-.eyebrow{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:12px;font-weight:800;margin-bottom:12px}
-.hero h2{font-size:clamp(27px,4vw,47px);line-height:1.07;margin:0 0 12px;letter-spacing:-.7px}
-body[dir="rtl"] .hero h2{letter-spacing:0}
-.hero-copy>p{color:var(--ink-soft);font-size:15px;line-height:1.75;margin:0 0 20px;max-width:800px}
-.hero-actions{display:flex;gap:10px;flex-wrap:wrap}
-.primary-btn,.secondary-btn{border:0;border-radius:9px;padding:11px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-.primary-btn{background:var(--brand);color:#fff}.primary-btn:hover{filter:brightness(1.08)}
-.secondary-btn{background:var(--card);color:var(--ink);border:1px solid var(--line)}
-.hero-card{padding:18px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
-.mini-stat{padding:15px;border:1px solid var(--line);border-radius:11px;background:var(--field)}
-.mini-stat .value{font-size:23px;font-weight:900;color:var(--brand);margin-bottom:4px}.mini-stat .label{font-size:12px;color:var(--ink-soft);line-height:1.45}
-.workspace{display:grid;grid-template-columns:minmax(360px,.96fr) minmax(390px,1.04fr);gap:18px;align-items:start}
-.panel,.result-panel{padding:20px}
-.panel-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:17px}
-.panel-head h3{margin:0;font-size:20px}.panel-head p{margin:5px 0 0;color:var(--ink-soft);font-size:12.5px;line-height:1.55}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}
-label{font-size:12px;font-weight:800;color:var(--ink-soft)}
-input,select{width:100%;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:8px;padding:10px 11px;outline:none;min-height:42px}
-input:focus,select:focus{border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 20%,transparent)}
-.form-actions{display:flex;gap:10px;margin-top:17px;flex-wrap:wrap}.form-actions button{min-width:150px}
-.status{font-size:12px;color:var(--ink-soft);margin-top:12px;min-height:19px}
-.result-panel{position:sticky;top:92px;min-height:540px}
-.empty-state{min-height:460px;display:grid;place-items:center;text-align:center;color:var(--ink-soft);padding:30px}
-.empty-icon{width:82px;height:82px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center;font-size:34px;margin:0 auto 15px}
-.result-content{display:none}.result-content.visible{display:block}.empty-state.hidden{display:none}
-.score-wrap{display:grid;grid-template-columns:170px minmax(0,1fr);gap:17px;align-items:center;margin-bottom:16px}
-.score-ring{--score:0;--ring:var(--good);width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--ring) calc(var(--score)*1%),var(--line) 0);display:grid;place-items:center;position:relative;margin:auto}
-.score-ring:before{content:"";position:absolute;inset:13px;background:var(--card);border-radius:50%}.score-inner{position:relative;text-align:center}.score-number{font-size:42px;font-weight:950;line-height:1}.score-denom{font-size:12px;color:var(--ink-soft)}
-.risk-badge{display:inline-flex;padding:6px 11px;border-radius:999px;color:#fff;font-size:12px;font-weight:900;margin-bottom:8px}
-.risk-badge.low{background:var(--good)}.risk-badge.medium{background:var(--warn);color:#202020}.risk-badge.high{background:var(--bad)}
-.decision h4{font-size:22px;margin:0 0 6px}.decision p{margin:0;color:var(--ink-soft);font-size:12.5px;line-height:1.6}
-.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
-.metric{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--field)}
-.metric .m-label{font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);font-weight:800;letter-spacing:.4px}.metric .m-value{font-size:18px;font-weight:900;margin-top:5px;overflow-wrap:anywhere}.metric .m-desc{font-size:11px;color:var(--ink-soft);line-height:1.45;margin-top:5px}
-body[dir="rtl"] .metric .m-label{letter-spacing:0}
-.decision-kicker{font-size:11px;color:var(--ink-soft);font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px}.decision-amount{font-size:28px!important;color:var(--brand);font-weight:950!important;margin:1px 0 7px!important}.decision-strip{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}.decision-item{padding:12px;border-radius:10px;background:var(--brand-soft);border:1px solid var(--line)}.decision-item b{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:5px}.decision-item span{display:block;font-size:13px;font-weight:800}.decision-item small{display:block;font-size:10.5px;color:var(--ink-soft);line-height:1.45;margin-top:5px}.logic-card{border:1px solid var(--line);border-radius:10px;padding:13px 14px;background:var(--field);margin:4px 0 14px}.logic-card h4{margin:0 0 9px;font-size:15px}.logic-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}.logic-row:last-of-type{border-bottom:0}.logic-row span{color:var(--ink-soft)}.logic-row b{text-align:end}.logic-note{margin:9px 0 0;color:var(--ink-soft);font-size:11px;line-height:1.55}
-.reason-box{border-top:1px solid var(--line);padding-top:14px}.reason-box h4{margin:0 0 10px;font-size:15px}.reason-list{display:grid;gap:8px}.reason{padding:9px 11px;border-radius:8px;font-size:12px;line-height:1.5;border-inline-start:4px solid var(--info);background:var(--field)}.reason.good{border-color:var(--good)}.reason.mid{border-color:var(--warn)}.reason.risk{border-color:var(--bad)}.reason.final{border-color:var(--brand);font-weight:700}
-footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);font-size:11px;line-height:1.6}
-.loading{opacity:.68;pointer-events:none}.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:none}.loading .spinner{display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:1050px){.hero,.workspace{grid-template-columns:1fr}.result-panel{position:static}.hero-card{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:720px){main{padding:14px}.header-inner{padding:9px 12px}.brand{max-width:210px}.brand h1{font-size:17px}.brand p{font-size:10px}.nav{margin-inline-start:0;width:100%}.nav-link{flex:1}.hero-copy,.hero-card,.panel,.result-panel{border-radius:11px}.hero-card{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid,.metric-grid,.decision-strip{grid-template-columns:1fr}.field.full{grid-column:auto}.score-wrap{grid-template-columns:1fr;text-align:center}.result-panel{min-height:auto}.empty-state{min-height:300px}.seg button{padding:7px 8px}}
-
-
-/* Report export */
-.export-actions{
-  display:none;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 15px;
+* {
+  box-sizing:border-box
 }
-.export-actions.visible{display:flex}
-.export-btn{
-  border:1px solid var(--line);border-radius:9px;padding:10px 14px;
-  background:var(--field);color:var(--ink);font-weight:800;cursor:pointer;
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+html {
+  scroll-behavior:smooth
 }
-.export-btn:hover{border-color:var(--gold);background:var(--brand-soft)}
-.export-btn:disabled{opacity:.65;cursor:wait}
-.export-btn.pdf{border-color:var(--gold)}
-.export-btn.word{border-color:var(--brand)}
-@media(max-width:720px){
-  .export-actions{width:100%}
-  .export-btn{flex:1;min-width:140px}
+body {
+  margin:0;
+  font-family:"Segoe UI",Tahoma,system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh
 }
-@media print{
-  .no-export{display:none!important}
-  .result-panel{position:static!important;top:auto!important;box-shadow:none!important}
+body[dir="rtl"] {
+  font-family:Tahoma,"Segoe UI",system-ui,sans-serif
 }
-
-/* AgriFin Assistant */
-.chat-launcher{
-  position:fixed;inset-inline-end:22px;bottom:22px;z-index:120;
-  width:58px;height:58px;border:none;border-radius:50%;
-  display:grid;place-items:center;cursor:pointer;
+a {
+  color:inherit
+}
+button,input,select {
+  font:inherit
+}
+header {
+  position:sticky;
+  top:0;
+  z-index:60;
   background:linear-gradient(135deg,var(--brand-deep),var(--brand));
-  color:var(--hdr-ink);box-shadow:0 8px 24px rgba(0,0,0,.24);
-  font-size:25px;transition:transform .2s ease,box-shadow .2s ease;
+  color:var(--hdr-ink);
+  border-bottom:4px solid var(--gold);
+  box-shadow:0 4px 18px rgba(0,0,0,.12)
 }
-.chat-launcher:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
-.chat-launcher:focus-visible,.chat-close:focus-visible,.chat-send:focus-visible,.chat-chip:focus-visible{
-  outline:3px solid var(--gold);outline-offset:3px;
+.header-inner {
+  max-width:1500px;
+  margin:auto;
+  padding:10px 22px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap
 }
-.chat-panel{
-  position:fixed;inset-inline-end:22px;bottom:92px;z-index:119;
-  width:min(390px,calc(100vw - 28px));height:min(590px,calc(100vh - 125px));
-  display:flex;flex-direction:column;overflow:hidden;
-  background:var(--card);color:var(--ink);
-  border:1px solid var(--line);border-radius:18px;
-  box-shadow:0 18px 48px rgba(0,0,0,.28);
-  opacity:0;visibility:hidden;transform:translateY(14px) scale(.98);
-  transition:opacity .2s ease,transform .2s ease,visibility .2s;
+.logo {
+  width:52px;
+  height:52px;
+  border-radius:8px;
+  background:#fff;
+  padding:3px;
+  object-fit:contain;
+  flex:none
 }
-.chat-panel.open{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
-.chat-header{
-  display:flex;align-items:center;gap:11px;padding:14px 15px;
-  background:linear-gradient(135deg,var(--brand-deep),var(--brand));
-  color:var(--hdr-ink);border-bottom:3px solid var(--gold);
+.brand h1 {
+  margin:0;
+  font-size:21px;
+  line-height:1.1
 }
-.chat-avatar{
-  width:41px;height:41px;border-radius:12px;background:rgba(255,255,255,.15);
-  display:grid;place-items:center;font-size:21px;flex:none;
+.brand p {
+  margin:3px 0 0;
+  font-size:12.5px;
+  opacity:.9
 }
-.chat-heading{min-width:0;flex:1}
-.chat-heading strong{display:block;font-size:14px}
-.chat-heading span{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:11px;opacity:.9}
-.chat-dot{width:7px;height:7px;border-radius:50%;background:#6de38e;box-shadow:0 0 0 3px rgba(109,227,142,.18)}
-.chat-close{
-  width:34px;height:34px;border:none;border-radius:9px;cursor:pointer;
-  background:rgba(255,255,255,.12);color:var(--hdr-ink);font-size:20px;
+.nav {
+  margin-inline-start:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap
 }
-.chat-close:hover{background:rgba(255,255,255,.22)}
-.chat-body{
-  flex:1;overflow:auto;padding:14px;background:var(--bg);
-  scroll-behavior:smooth;
+.nav-link,.btn-ghost {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  text-decoration:none;
+  background:transparent;
+  color:var(--hdr-ink);
+  border:1px solid rgba(255,255,255,.42);
+  border-radius:7px;
+  padding:7px 11px;
+  font-size:12.5px;
+  cursor:pointer;
+  min-height:34px
 }
-.chat-message{display:flex;margin-bottom:11px}
-.chat-message.assistant{justify-content:flex-start}
-.chat-message.user{justify-content:flex-end}
-.chat-bubble{
-  max-width:84%;padding:10px 12px;border-radius:14px;
-  font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;
-  border:1px solid var(--line);box-shadow:var(--shadow);
+.nav-link:hover,.btn-ghost:hover {
+  background:rgba(255,255,255,.14)
 }
-.chat-message.assistant .chat-bubble{
-  background:var(--card);color:var(--ink);border-start-start-radius:5px;
+.nav-link.dashboard {
+  border-color:var(--gold);
+  background:rgba(200,162,75,.18);
+  font-weight:700
 }
-.chat-message.user .chat-bubble{
-  background:var(--brand);color:var(--hdr-ink);border-color:transparent;
-  border-end-end-radius:5px;
+.seg {
+  display:flex;
+  border:1px solid rgba(255,255,255,.45);
+  border-radius:8px;
+  overflow:hidden
 }
-.chat-quick{padding:0 14px 10px;background:var(--bg)}
-.chat-quick-label{font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-bottom:7px}
-.chat-chips{display:flex;flex-wrap:wrap;gap:7px;padding-bottom:3px}
-.chat-chip{
-  flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
-  border-radius:999px;padding:7px 10px;font-size:11px;cursor:pointer;
-  white-space:normal;
+.seg button {
+  border:0;
+  background:transparent;
+  color:var(--hdr-ink);
+  padding:7px 10px;
+  font-size:12px;
+  cursor:pointer
 }
-.chat-chip:hover{border-color:var(--gold);background:var(--brand-soft)}
-.chat-input-wrap{
-  display:flex;gap:8px;padding:11px;border-top:1px solid var(--line);background:var(--card);
+.seg button.active {
+  background:var(--gold);
+  color:#1f2a1f;
+  font-weight:800
 }
-.chat-input{
-  flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);
-  border-radius:12px;padding:10px 11px;font:inherit;font-size:13px;resize:none;
-  min-height:42px;max-height:90px;
+main {
+  max-width:1500px;
+  margin:0 auto;
+  padding:22px
 }
-.chat-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,162,75,.16)}
-.chat-send{
-  width:44px;height:42px;align-self:flex-end;border:none;border-radius:12px;
-  cursor:pointer;background:var(--gold);color:#1f2a1f;font-size:18px;font-weight:800;
+.hero {
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);
+  gap:18px;
+  margin-bottom:18px
 }
-.chat-send:hover{filter:brightness(1.04)}
-.chat-note{
-  padding:0 12px 9px;background:var(--card);color:var(--ink-soft);
-  text-align:center;font-size:9.5px;
+.hero-copy,.hero-card,.panel,.result-panel {
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  box-shadow:var(--shadow)
 }
-@media(max-width:600px){
-  .chat-launcher{inset-inline-end:14px;bottom:14px}
-  .chat-panel{inset-inline-end:14px;bottom:82px;width:calc(100vw - 28px);height:min(610px,calc(100vh - 100px))}
+.hero-copy {
+  padding:26px;
+  background:linear-gradient(145deg,var(--card),var(--brand-soft))
 }
-
+.eyebrow {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:5px 10px;
+  border-radius:999px;
+  background:var(--brand-soft);
+  color:var(--brand);
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:12px
+}
+.hero h2 {
+  font-size:clamp(27px,4vw,47px);
+  line-height:1.07;
+  margin:0 0 12px;
+  letter-spacing:-.7px
+}
+body[dir="rtl"] .hero h2 {
+  letter-spacing:0
+}
+.hero-copy>p {
+  color:var(--ink-soft);
+  font-size:15px;
+  line-height:1.75;
+  margin:0 0 20px;
+  max-width:800px
+}
+.hero-actions {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap
+}
+.primary-btn,.secondary-btn {
+  border:0;
+  border-radius:9px;
+  padding:11px 16px;
+  font-weight:800;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap:8px
+}
+.primary-btn {
+  background:var(--brand);
+  color:#fff
+}
+.primary-btn:hover {
+  filter:brightness(1.08)
+}
+.secondary-btn {
+  background:var(--card);
+  color:var(--ink);
+  border:1px solid var(--line)
+}
+.hero-card {
+  padding:18px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  align-content:start
+}
+.mini-stat {
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--field)
+}
+.mini-stat .value {
+  font-size:23px;
+  font-weight:900;
+  color:var(--brand);
+  margin-bottom:4px
+}
+.mini-stat .label {
+  font-size:12px;
+  color:var(--ink-soft);
+  line-height:1.45
+}
+.workspace {
+  display:grid;
+  grid-template-columns:minmax(360px,.96fr) minmax(390px,1.04fr);
+  gap:18px;
+  align-items:start
+}
+.panel,.result-panel {
+  padding:20px
+}
+.panel-head {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom:17px
+}
+.panel-head h3 {
+  margin:0;
+  font-size:20px
+}
+.panel-head p {
+  margin:5px 0 0;
+  color:var(--ink-soft);
+  font-size:12.5px;
+  line-height:1.55
+}
+.step {
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:var(--brand-soft);
+  color:var(--brand);
+  font-weight:900;
+  flex:none
+}
+.form-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px
+}
+.field {
+  display:flex;
+  flex-direction:column;
+  gap:6px
+}
+.field.full {
+  grid-column:1/-1
+}
+label {
+  font-size:12px;
+  font-weight:800;
+  color:var(--ink-soft)
+}
+input,select {
+  width:100%;
+  border:1px solid var(--line);
+  background:var(--field);
+  color:var(--ink);
+  border-radius:8px;
+  padding:10px 11px;
+  outline:none;
+  min-height:42px
+}
+input:focus,select:focus {
+  border-color:var(--focus);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 20%,transparent)
+}
+.form-actions {
+  display:flex;
+  gap:10px;
+  margin-top:17px;
+  flex-wrap:wrap
+}
+.form-actions button {
+  min-width:150px
+}
+.status {
+  font-size:12px;
+  color:var(--ink-soft);
+  margin-top:12px;
+  min-height:19px
+}
+.result-panel {
+  position:sticky;
+  top:92px;
+  min-height:540px
+}
+.empty-state {
+  min-height:460px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:var(--ink-soft);
+  padding:30px
+}
+.empty-icon {
+  width:82px;
+  height:82px;
+  border-radius:50%;
+  background:var(--brand-soft);
+  display:grid;
+  place-items:center;
+  font-size:34px;
+  margin:0 auto 15px
+}
+.result-content {
+  display:none
+}
+.result-content.visible {
+  display:block
+}
+.empty-state.hidden {
+  display:none
+}
+.score-wrap {
+  display:grid;
+  grid-template-columns:170px minmax(0,1fr);
+  gap:17px;
+  align-items:center;
+  margin-bottom:16px
+}
+.score-ring {
+  --score:0;
+  --ring:var(--good);
+  width:160px;
+  height:160px;
+  border-radius:50%;
+  background:conic-gradient(var(--ring) calc(var(--score)*1%),var(--line) 0);
+  display:grid;
+  place-items:center;
+  position:relative;
+  margin:auto
+}
+.score-ring:before {
+  content:"";
+  position:absolute;
+  inset:13px;
+  background:var(--card);
+  border-radius:50%
+}
+.score-inner {
+  position:relative;
+  text-align:center
+}
+.score-number {
+  font-size:42px;
+  font-weight:950;
+  line-height:1
+}
+.score-denom {
+  font-size:12px;
+  color:var(--ink-soft)
+}
+.risk-badge {
+  display:inline-flex;
+  padding:6px 11px;
+  border-radius:999px;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:8px
+}
+.risk-badge.low {
+  background:var(--good)
+}
+.risk-badge.medium {
+  background:var(--warn);
+  color:#202020
+}
+.risk-badge.high {
+  background:var(--bad)
+}
+.decision h4 {
+  font-size:22px;
+  margin:0 0 6px
+}
+.decision p {
+  margin:0;
+  color:var(--ink-soft);
+  font-size:12.5px;
+  line-height:1.6
+}
+.metric-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:14px 0
+}
+.metric {
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px;
+  background:var(--field)
+}
+.metric .m-label {
+  font-size:10.5px;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  font-weight:800;
+  letter-spacing:.4px
+}
+.metric .m-value {
+  font-size:18px;
+  font-weight:900;
+  margin-top:5px;
+  overflow-wrap:anywhere
+}
+body[dir="rtl"] .metric .m-label {
+  letter-spacing:0
+}
+.decision-strip {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:14px
+}
+.decision-item {
+  padding:12px;
+  border-radius:10px;
+  background:var(--brand-soft);
+  border:1px solid var(--line)
+}
+.decision-item b {
+  display:block;
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-bottom:5px
+}
+.decision-item span {
+  font-size:13px;
+  font-weight:800
+}
+.reason-box {
+  border-top:1px solid var(--line);
+  padding-top:14px
+}
+.reason-box h4 {
+  margin:0 0 10px;
+  font-size:15px
+}
+.reason-list {
+  display:grid;
+  gap:8px
+}
+.reason {
+  padding:9px 11px;
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.5;
+  border-inline-start:4px solid var(--info);
+  background:var(--field)
+}
+.reason.good {
+  border-color:var(--good)
+}
+.reason.mid {
+  border-color:var(--warn)
+}
+.reason.risk {
+  border-color:var(--bad)
+}
+.reason.final {
+  border-color:var(--brand);
+  font-weight:700
+}
+.repayment-card {
+  display:none;
+  margin-top:18px;
+  border-top:1px solid var(--line);
+  padding-top:17px
+}
+.repayment-card.visible {
+  display:block
+}
+.repayment-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px
+}
+.repayment-head h4 {
+  margin:0;
+  font-size:17px
+}
+.repayment-head p {
+  margin:5px 0 0;
+  color:var(--ink-soft);
+  font-size:11.5px;
+  line-height:1.55
+}
+.repayment-summary {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:12px
+}
+.repayment-summary .item {
+  border:1px solid var(--line);
+  background:var(--field);
+  border-radius:9px;
+  padding:10px
+}
+.repayment-summary b {
+  display:block;
+  color:var(--ink-soft);
+  font-size:10.5px;
+  margin-bottom:4px
+}
+.repayment-summary span {
+  font-size:12.5px;
+  font-weight:850;
+  overflow-wrap:anywhere
+}
+.table-scroll {
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:10px
+}
+.repayment-table {
+  width:100%;
+  border-collapse:collapse;
+  min-width:620px;
+  background:var(--card)
+}
+.repayment-table th,.repayment-table td {
+  padding:9px 10px;
+  border-bottom:1px solid var(--line);
+  font-size:11px;
+  text-align:start;
+  white-space:nowrap
+}
+.repayment-table th {
+  background:var(--brand-soft);
+  color:var(--ink);
+  font-weight:900
+}
+.repayment-table tbody tr:last-child td {
+  border-bottom:0
+}
+.repayment-note {
+  margin:9px 0 0;
+  color:var(--ink-soft);
+  font-size:10.5px;
+  line-height:1.55
+}
+.export-actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap
+}
+.export-btn {
+  border:1px solid var(--line);
+  background:var(--field);
+  color:var(--ink);
+  border-radius:8px;
+  padding:8px 11px;
+  font-size:11.5px;
+  font-weight:800;
+  cursor:pointer
+}
+.export-btn:hover {
+  border-color:var(--brand);
+  color:var(--brand)
+}
+.export-btn:disabled {
+  opacity:.55;
+  cursor:not-allowed
+}
+footer {
+  max-width:1500px;
+  margin:0 auto;
+  padding:0 22px 24px;
+  color:var(--ink-soft);
+  font-size:11px;
+  line-height:1.6
+}
+.loading {
+  opacity:.68;
+  pointer-events:none
+}
+.spinner {
+  width:16px;
+  height:16px;
+  border:2px solid rgba(255,255,255,.45);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  display:none
+}
+.loading .spinner {
+  display:inline-block
+}
+@keyframes spin {
+  to {
+    transform:rotate(360deg)
+  }
+}
+@media(max-width:1050px) {
+  .hero,.workspace {
+    grid-template-columns:1fr
+  }
+  .result-panel {
+    position:static
+  }
+  .hero-card {
+    grid-template-columns:repeat(4,minmax(0,1fr))
+  }
+}
+@media(max-width:720px) {
+  main {
+    padding:14px
+  }
+  .header-inner {
+    padding:9px 12px
+  }
+  .brand {
+    max-width:210px
+  }
+  .brand h1 {
+    font-size:17px
+  }
+  .brand p {
+    font-size:10px
+  }
+  .nav {
+    margin-inline-start:0;
+    width:100%
+  }
+  .nav-link {
+    flex:1
+  }
+  .hero-copy,.hero-card,.panel,.result-panel {
+    border-radius:11px
+  }
+  .hero-card {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .form-grid,.metric-grid,.decision-strip,.repayment-summary {
+    grid-template-columns:1fr
+  }
+  .field.full {
+    grid-column:auto
+  }
+  .score-wrap {
+    grid-template-columns:1fr;
+    text-align:center
+  }
+  .result-panel {
+    min-height:auto
+  }
+  .empty-state {
+    min-height:300px
+  }
+  .seg button {
+    padding:7px 8px
+  }
+}
 </style>
 </head>
 <body data-theme="light" dir="ltr">
@@ -236,7 +763,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
     <div class="hero-copy">
       <div class="eyebrow" id="eyebrow">AI-powered agricultural lending</div>
       <h2 id="heroTitle">Faster, fairer, and more sustainable agricultural loan decisions.</h2>
-      <p id="heroText">AgriFin AI combines project cost estimation and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.</p>
+      <p id="heroText">AgriFin AI combines project cost estimation, eligibility rules, and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.</p>
       <div class="hero-actions">
         <a class="primary-btn" href="#assessment" id="startBtn">Start Assessment</a>
         <a class="secondary-btn" href="/dashboard" target="_blank" rel="noopener noreferrer" id="heroDashboardLink">Open Dashboard ↗</a>
@@ -244,7 +771,7 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
     </div>
     <aside class="hero-card" aria-label="Platform capabilities">
       <div class="mini-stat"><div class="value">0–100</div><div class="label" id="stat1">AI risk score with clear risk class</div></div>
-      <div class="mini-stat"><div class="value">ACC</div><div class="label" id="stat2">Project cost estimation based on the agricultural cost guide</div></div>
+      <div class="mini-stat"><div class="value">75%</div><div class="label" id="stat2">Maximum eligible financing baseline</div></div>
       <div class="mini-stat"><div class="value">3</div><div class="label" id="stat3">Dashboard views for portfolio, lending, and risk</div></div>
       <div class="mini-stat"><div class="value">AR / EN</div><div class="label" id="stat4">Bilingual and accessibility-ready interface</div></div>
     </aside>
@@ -253,11 +780,13 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
   <section class="workspace" id="assessment">
     <section class="panel" aria-labelledby="formTitle">
       <div class="panel-head">
-        <div><h3 id="formTitle">Agricultural Loan Assessment</h3><p id="formHint">Enter the farmer and project information. The model will calculate risk, estimated project cost, and a recommended loan amount.</p></div>
+        <div><h3 id="formTitle">Agricultural Loan Assessment</h3><p id="formHint">Enter the farmer and project information. The model will calculate risk, project cost, eligible financing, and a recommended loan amount.</p></div>
+        <div class="step">1</div>
       </div>
       <form id="loanForm">
         <div class="form-grid">
           <div class="field"><label for="governorate" id="lGovernorate">Governorate</label><select id="governorate" name="governorate" required></select></div>
+          <div class="field"><label for="gender" id="lGender">Applicant gender</label><select id="gender" name="gender"></select></div>
           <div class="field full"><label for="projectType" id="lProject">Project type</label><select id="projectType" name="projectType" required></select></div>
           <div class="field full"><label for="cropActivity" id="lCrop">Crop or activity</label><select id="cropActivity" name="cropActivity" required></select></div>
           <div class="field"><label for="irrigationType" id="lIrrigation">Irrigation type</label><select id="irrigationType" name="irrigationType" required></select></div>
@@ -275,43 +804,57 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
         </div>
         <div class="status" id="formStatus" role="status" aria-live="polite"></div>
       </form>
+
+      <section class="repayment-card" id="repaymentCard" aria-labelledby="repaymentScheduleTitle">
+        <div class="repayment-head">
+          <div>
+            <h4 id="repaymentScheduleTitle">Proposed repayment schedule</h4>
+            <p id="repaymentScheduleHint">A prototype schedule aligned with the project's expected income cycle.</p>
+          </div>
+          <div class="export-actions">
+            <button class="export-btn" id="pdfExportBtn" type="button">Export PDF</button>
+            <button class="export-btn" id="wordExportBtn" type="button">Export Word</button>
+          </div>
+        </div>
+        <div class="repayment-summary">
+          <div class="item"><b id="rpPlanL">Plan type</b><span id="rpPlan">—</span></div>
+          <div class="item"><b id="rpFrequencyL">Frequency</b><span id="rpFrequency">—</span></div>
+          <div class="item"><b id="rpGraceL">Grace period</b><span id="rpGrace">—</span></div>
+          <div class="item"><b id="rpCountL">Number of installments</b><span id="rpCount">—</span></div>
+          <div class="item"><b id="rpFirstL">First payment</b><span id="rpFirst">—</span></div>
+          <div class="item"><b id="rpAmountL">Estimated installment</b><span id="rpAmount">—</span></div>
+        </div>
+        <div class="table-scroll">
+          <table class="repayment-table">
+            <thead><tr><th id="rpNoH">No.</th><th id="rpDueH">Due date</th><th id="rpTypeH">Type</th><th id="rpAmountH">Estimated amount</th><th id="rpBalanceH">Remaining balance</th></tr></thead>
+            <tbody id="repaymentTableBody"></tbody>
+          </table>
+        </div>
+        <p class="repayment-note" id="repaymentBasis"></p>
+        <p class="repayment-note" id="repaymentNote"></p>
+      </section>
     </section>
 
-    <section class="result-panel" id="resultPanel" aria-labelledby="resultTitle">
+    <section class="result-panel" aria-labelledby="resultTitle">
       <div class="panel-head">
-        <div><h3 id="resultTitle">AI Risk Result</h3><p id="resultHint">The model explains the risk level and how the financing recommendation was calculated.</p></div>
-      </div>
-      <div class="export-actions no-export" id="exportActions" data-html2canvas-ignore="true">
-        <button class="export-btn pdf" id="exportPdfBtn" type="button">📄 <span id="exportPdfText">Export PDF</span></button>
-        <button class="export-btn word" id="exportWordBtn" type="button">📝 <span id="exportWordText">Export Word</span></button>
+        <div><h3 id="resultTitle">Decision Support Result</h3><p id="resultHint">The recommendation supports the lending officer and does not replace the final institutional decision.</p></div>
+        <div class="step">2</div>
       </div>
       <div class="empty-state" id="emptyState"><div><div class="empty-icon">🌱</div><h4 id="emptyTitle">No assessment yet</h4><p id="emptyText">Complete the form and select “Analyze Application” to view the AI-supported result.</p></div></div>
       <div class="result-content" id="resultContent">
         <div class="score-wrap">
           <div class="score-ring" id="scoreRing"><div class="score-inner"><div class="score-number" id="riskScore">0</div><div class="score-denom" id="scoreDenom">out of 100</div></div></div>
-          <div class="decision">
-            <div class="decision-kicker" id="overallRiskL">Overall application risk</div>
-            <span class="risk-badge low" id="riskBadge">Low Risk</span>
-            <h4 class="decision-amount" id="headlineLoan">—</h4>
-            <p id="decisionSummary">The model recommendation will be explained here after the assessment.</p>
-          </div>
+          <div class="decision"><span class="risk-badge low" id="riskBadge">Low Risk</span><h4 id="decisionHeading">Recommended financing decision</h4><p id="decisionSummary">The platform combines the model score with estimated project cost and financing eligibility.</p></div>
         </div>
         <div class="metric-grid">
-          <div class="metric"><div class="m-label" id="mRecommendedL">Recommended loan</div><div class="m-value" id="mRecommended">—</div><div class="m-desc" id="mRecommendedD">Risk-adjusted amount after comparing the request with the estimated project cost.</div></div>
-          <div class="metric"><div class="m-label" id="mRequestedL">Requested loan</div><div class="m-value" id="mRequested">—</div><div class="m-desc" id="mRequestedD">Financing amount requested by the applicant.</div></div>
-          <div class="metric"><div class="m-label" id="mCostL">Estimated project cost</div><div class="m-value" id="mCost">—</div><div class="m-desc" id="mCostD">Cost per unit multiplied by farm area or number of units.</div></div>
-          <div class="metric"><div class="m-label" id="mFlagL">Over-financing ratio</div><div class="m-value" id="mFlag">—</div><div class="m-desc" id="mFlagD">Requested loan compared with the estimated project cost.</div></div>
-        </div>
-        <div class="logic-card">
-          <h4 id="logicTitle">Cost & Financing Logic</h4>
-          <div class="logic-row"><span id="costUnitL">Cost per dunum / unit</span><b id="costUnit">—</b></div>
-          <div class="logic-row"><span id="logicCostL">Estimated project cost</span><b id="logicCost">—</b></div>
-          <div class="logic-row"><span id="logicRequestedL">Requested loan</span><b id="logicRequested">—</b></div>
-          <div class="logic-row"><span id="logicGapL">Amount above estimated project cost</span><b id="logicGap">—</b></div>
-          <p class="logic-note" id="logicNote">The system compares the requested loan with the estimated project cost, expected revenue, and risk level.</p>
+          <div class="metric"><div class="m-label" id="mRecommendedL">Recommended loan</div><div class="m-value" id="mRecommended">—</div></div>
+          <div class="metric"><div class="m-label" id="mEligibleL">Maximum eligible financing</div><div class="m-value" id="mEligible">—</div></div>
+          <div class="metric"><div class="m-label" id="mCostL">Estimated project cost</div><div class="m-value" id="mCost">—</div></div>
+          <div class="metric"><div class="m-label" id="mRatioL">Overfinancing ratio</div><div class="m-value" id="mRatio">—</div></div>
         </div>
         <div class="decision-strip">
-          <div class="decision-item"><b id="repaymentL">Repayment plan</b><span id="repaymentValue">—</span><small id="repaymentD">Suggested according to project type and repayment period.</small></div>
+          <div class="decision-item"><b id="routeL">Approval route</b><span id="routeValue">—</span></div>
+          <div class="decision-item"><b id="repaymentL">Repayment plan</b><span id="repaymentValue">—</span></div>
         </div>
         <div class="reason-box"><h4 id="reasonsTitle">Why this result?</h4><div class="reason-list" id="reasonList"></div></div>
       </div>
@@ -320,894 +863,420 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
 </main>
 <footer id="footerText">Prototype decision-support system for ACC Jordan · AgriFin AI — HTU</footer>
 
-
-<!-- AgriFin Assistant UI — API connection will be added in the next step -->
-<button class="chat-launcher" id="chatLauncher" type="button"
-  aria-label="Open AgriFin Assistant" aria-controls="chatPanel" aria-expanded="false">💬</button>
-
-<aside class="chat-panel" id="chatPanel" aria-hidden="true" aria-label="AgriFin Assistant">
-  <div class="chat-header">
-    <div class="chat-avatar" aria-hidden="true">🌿</div>
-    <div class="chat-heading">
-      <strong id="chatTitle">AgriFin Assistant</strong>
-      <span><i class="chat-dot" aria-hidden="true"></i><span id="chatStatus">Ready to help</span></span>
-    </div>
-    <button class="chat-close" id="chatClose" type="button" aria-label="Close assistant">×</button>
-  </div>
-
-  <div class="chat-body" id="chatBody" role="log" aria-live="polite">
-    <div class="chat-message assistant">
-      <div class="chat-bubble" id="chatWelcome">
-        Hello! Ask me about any AgriFin field, calculation, or current result.
-      </div>
-    </div>
-  </div>
-
-  <div class="chat-quick">
-    <div class="chat-quick-label" id="chatQuickLabel">Suggested questions</div>
-    <div class="chat-chips">
-      <button class="chat-chip" type="button" data-chat-key="revenue" id="chatChipRevenue">What is expected annual revenue?</button>
-      <button class="chat-chip" type="button" data-chat-key="cost" id="chatChipCost">How is project cost calculated?</button>
-      <button class="chat-chip" type="button" data-chat-key="risk" id="chatChipRisk">What does the risk score mean?</button>
-    </div>
-  </div>
-
-  <form class="chat-input-wrap" id="chatForm">
-    <textarea class="chat-input" id="chatInput" rows="1"
-      placeholder="Ask about a field or result…" aria-label="Chat message"></textarea>
-    <button class="chat-send" id="chatSend" type="submit" aria-label="Send message">➤</button>
-  </form>
-  <div class="chat-note" id="chatNote">Field and result explanations are available.</div>
-</aside>
-
 <script>
 const THEME_KEY='agrifin-theme';
 const LANG_KEY='agrifin-lang';
 let LANG='en';
 let THEME='light';
-let LAST_ASSESSMENT=null;
+let LAST_RESULT=null;
+let LAST_PAYLOAD=null;
 const $=id=>document.getElementById(id);
-
 const DATA={
-  governorates:[['Irbid','Irbid','إربد'],['Balqa','Balqa','البلقاء'],['Amman','Amman','العاصمة'],['Mafraq','Mafraq','المفرق'],['Karak','Karak','الكرك'],['Madaba','Madaba','مادبا'],['Ajloun','Ajloun','عجلون'],['Jerash','Jerash','جرش'],["Ma'an","Ma'an",'معان'],['Aqaba','Aqaba','العقبة'],['Tafilah','Tafilah','الطفيلة'],['Zarqa','Zarqa','الزرقاء']],
-  projects:[['Open Field Vegetables','Open Field Vegetables','خضار مكشوفة'],['Protected Vegetables / Greenhouse','Protected Vegetables / Greenhouse','خضار محمية / بيت بلاستيكي'],['Olives / Fruit Trees','Olives / Fruit Trees','زيتون وأشجار مثمرة'],['Field Crops','Field Crops','محاصيل حقلية'],['Livestock','Livestock','ثروة حيوانية'],['Irrigation / Water Project','Irrigation / Water Project','مشروع ري / مياه'],['Machinery / Tractor','Machinery / Tractor','معدات / جرار زراعي'],['Storage / Farm Housing','Storage / Farm Housing','تخزين / مبانٍ زراعية']],
-  crops:[['Tomatoes Open Field','Tomatoes — Open Field','بندورة مكشوفة'],['Potatoes Open Field','Potatoes — Open Field','بطاطا مكشوفة'],['Cucumber Greenhouse','Cucumber — Greenhouse','خيار محمي'],['Tomatoes Greenhouse','Tomatoes — Greenhouse','بندورة محمية'],['Pepper Greenhouse','Pepper — Greenhouse','فلفل محمي'],['Olives','Olives','زيتون'],['Citrus','Citrus','حمضيات'],['Wheat Barley','Wheat / Barley','قمح / شعير'],['Sheep Goats','Sheep & Goats','أغنام وماعز'],['Irrigation System','Irrigation System','نظام ري']],
-  irrigation:[['Drip','Drip','تنقيط'],["Rainfed (Ba'al)","Rainfed (Ba'al)",'بعلي'],['Surface','Surface','سطحي'],['Controlled (Greenhouse)','Controlled (Greenhouse)','محمي / بيت بلاستيكي'],['Center Pivot','Center Pivot','ري محوري']],
-  water:[['High','High','مرتفع'],['Medium','Medium','متوسط'],['Low','Low','منخفض']],
-  yesNo:[['Yes','Yes','نعم'],['No','No','لا']],
-  financing:[['فائدة','Interest-based','فائدة'],['مرابحة','Murabaha','مرابحة']]
+  governorates:[['Irbid', 'Irbid', 'إربد'], ['Balqa', 'Balqa', 'البلقاء'], ['Amman', 'Amman', 'العاصمة'], ['Mafraq', 'Mafraq', 'المفرق'], ['Karak', 'Karak', 'الكرك'], ['Madaba', 'Madaba', 'مادبا'], ['Ajloun', 'Ajloun', 'عجلون'], ['Jerash', 'Jerash', 'جرش'], ["Ma'an", "Ma'an", 'معان'], ['Aqaba', 'Aqaba', 'العقبة'], ['Tafilah', 'Tafilah', 'الطفيلة'], ['Zarqa', 'Zarqa', 'الزرقاء']],
+  projects:[['Open Field Vegetables', 'Open Field Vegetables', 'خضار مكشوفة'], ['Protected Vegetables / Greenhouse', 'Protected Vegetables / Greenhouse', 'خضار محمية / بيت بلاستيكي'], ['Olives / Fruit Trees', 'Olives / Fruit Trees', 'زيتون وأشجار مثمرة'], ['Field Crops', 'Field Crops', 'محاصيل حقلية'], ['Livestock', 'Livestock', 'ثروة حيوانية'], ['Irrigation / Water Project', 'Irrigation / Water Project', 'مشروع ري / مياه'], ['Machinery / Tractor', 'Machinery / Tractor', 'معدات / جرار زراعي'], ['Storage / Farm Housing', 'Storage / Farm Housing', 'تخزين / مبانٍ زراعية']],
+  crops:[['Tomatoes Open Field', 'Tomatoes — Open Field', 'بندورة مكشوفة'], ['Potatoes Open Field', 'Potatoes — Open Field', 'بطاطا مكشوفة'], ['Cucumber Greenhouse', 'Cucumber — Greenhouse', 'خيار محمي'], ['Tomatoes Greenhouse', 'Tomatoes — Greenhouse', 'بندورة محمية'], ['Pepper Greenhouse', 'Pepper — Greenhouse', 'فلفل محمي'], ['Olives', 'Olives', 'زيتون'], ['Citrus', 'Citrus', 'حمضيات'], ['Wheat Barley', 'Wheat / Barley', 'قمح / شعير'], ['Sheep Goats', 'Sheep & Goats', 'أغنام وماعز'], ['Irrigation System', 'Irrigation System', 'نظام ري']],
+  irrigation:[['Drip', 'Drip', 'تنقيط'], ["Rainfed (Ba'al)", "Rainfed (Ba'al)", 'بعلي'], ['Surface', 'Surface', 'سطحي'], ['Controlled (Greenhouse)', 'Controlled (Greenhouse)', 'محمي / بيت بلاستيكي'], ['Center Pivot', 'Center Pivot', 'ري محوري']],
+  water:[['High', 'High', 'مرتفع'], ['Medium', 'Medium', 'متوسط'], ['Low', 'Low', 'منخفض']],
+  yesNo:[['Yes', 'Yes', 'نعم'], ['No', 'No', 'لا']],
+  gender:[['ذكر', 'Male', 'ذكر'], ['أنثى', 'Female', 'أنثى']],
+  financing:[['فائدة', 'Interest-based', 'فائدة'], ['مرابحة', 'Murabaha', 'مرابحة']]
 };
-
 const T={
-  chatTitle:{en:'AgriFin Assistant',ar:'مساعد AgriFin'},
-  chatStatus:{en:'Ready to help',ar:'جاهز للمساعدة'},
-  chatWelcome:{en:'Hello! Ask me about any AgriFin field, calculation, or current result.',ar:'مرحبًا! اسألني عن أي حقل أو عملية حسابية أو نتيجة حالية في AgriFin AI.'},
-  chatQuickLabel:{en:'Suggested questions',ar:'أسئلة مقترحة'},
-  chatChipRevenue:{en:'What is expected annual revenue?',ar:'ما المقصود بالإيراد السنوي المتوقع؟'},
-  chatChipCost:{en:'How is project cost calculated?',ar:'كيف تُحسب تكلفة المشروع؟'},
-  chatChipRisk:{en:'What does the risk score mean?',ar:'ماذا تعني درجة المخاطر؟'},
-  chatNote:{en:'Field and result explanations are available.',ar:'شرح الحقول والنتائج متاح الآن.'},
-  exportPdfText:{en:'Export PDF',ar:'تصدير PDF'},
-  exportWordText:{en:'Export Word',ar:'تصدير Word'},
-  exportPdfWorking:{en:'Creating PDF…',ar:'جارٍ إنشاء PDF…'},
-  exportWordWorking:{en:'Creating Word…',ar:'جارٍ إنشاء Word…'},
-  exportNoResult:{en:'Run an assessment before exporting the report.',ar:'نفّذ تحليل الطلب أولًا قبل تصدير التقرير.'},
-  exportError:{en:'The report could not be exported. Please try again.',ar:'تعذر تصدير التقرير. حاول مرة أخرى.'},
-
-  brandSub:{en:'Agricultural Loan Decision Support',ar:'دعم قرارات التمويل الزراعي'},
-  assessmentNav:{en:'Loan Assessment',ar:'تقييم طلب التمويل'},dashboardLink:{en:'Analytics Dashboard ↗',ar:'لوحة التحليلات ↗'},dashboardTitle:{en:'Opens in a new tab',ar:'تفتح في تبويب جديد'},
-  eyebrow:{en:'AI-powered agricultural lending',ar:'تمويل زراعي مدعوم بالذكاء الاصطناعي'},
-  heroTitle:{en:'Faster, fairer, and more sustainable agricultural loan decisions.',ar:'قرارات تمويل زراعي أسرع وأكثر عدالة واستدامة.'},
-  heroText:{en:'AgriFin AI combines project cost estimation and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.',ar:'تجمع منصة AgriFin AI بين تقدير تكلفة المشروع ودرجة المخاطر بالذكاء الاصطناعي لدعم موظف الإقراض الزراعي بتوصية واضحة وأسباب قابلة للفهم.'},
-  startBtn:{en:'Start Assessment',ar:'ابدأ التقييم'},heroDashboardLink:{en:'Open Dashboard ↗',ar:'افتح لوحة التحليلات ↗'},
-  stat1:{en:'AI risk score with clear risk class',ar:'درجة مخاطر ذكية مع تصنيف واضح'},stat2:{en:'Project cost estimation based on the agricultural cost guide',ar:'تقدير تكلفة المشروع بالاعتماد على دليل التكاليف الزراعية'},stat3:{en:'Dashboard views for portfolio, lending, and risk',ar:'واجهات للمحفظة والإقراض والمخاطر'},stat4:{en:'Bilingual and accessibility-ready interface',ar:'واجهة عربية وإنجليزية تدعم سهولة الوصول'},
-  formTitle:{en:'Agricultural Loan Assessment',ar:'تقييم طلب التمويل الزراعي'},formHint:{en:'Enter the farmer and project information. The model will calculate risk, estimated project cost, and a recommended loan amount.',ar:'أدخل بيانات المزارع والمشروع. سيحسب النظام المخاطر وتكلفة المشروع ومبلغ القرض المقترح.'},
-  lGovernorate:{en:'Governorate',ar:'المحافظة'},lProject:{en:'Project type',ar:'نوع المشروع'},lCrop:{en:'Crop or activity',ar:'المحصول أو النشاط'},lIrrigation:{en:'Irrigation type',ar:'نوع الري'},lWater:{en:'Water availability',ar:'توفر المياه'},lArea:{en:'Farm area / units',ar:'مساحة المزرعة / عدد الوحدات'},lYears:{en:'Repayment period (years)',ar:'فترة السداد (بالسنوات)'},lRequested:{en:'Requested loan (JOD)',ar:'القرض المطلوب (دينار)'},lRevenue:{en:'Expected annual revenue (JOD)',ar:'الإيراد السنوي المتوقع (دينار)'},lFirst:{en:'First-time borrower?',ar:'مقترض لأول مرة؟'},lMethod:{en:'Financing method',ar:'طريقة التمويل'},
-  submitText:{en:'Analyze Application',ar:'تحليل الطلب'},exampleBtn:{en:'Load Example',ar:'تحميل مثال'},
-  resultTitle:{en:'AI Risk Result',ar:'نتيجة تحليل المخاطر'},resultHint:{en:'The model explains the risk level and how the financing recommendation was calculated.',ar:'يوضح النموذج مستوى المخاطر وكيف تم احتساب التوصية التمويلية.'},emptyTitle:{en:'No assessment yet',ar:'لا توجد نتيجة بعد'},emptyText:{en:'Complete the form and select “Analyze Application” to view the AI-supported result.',ar:'أكمل النموذج واضغط «تحليل الطلب» لعرض النتيجة المدعومة بالذكاء الاصطناعي.'},scoreDenom:{en:'out of 100',ar:'من 100'},overallRiskL:{en:'Overall application risk',ar:'مخاطر الطلب بشكل عام'},
-  mRecommendedL:{en:'Recommended loan',ar:'القرض المقترح'},mRecommendedD:{en:'Risk-adjusted amount after comparing the request with the estimated project cost.',ar:'مبلغ معدل حسب المخاطر بعد مقارنة القرض المطلوب بتكلفة المشروع المقدرة.'},mRequestedL:{en:'Requested loan',ar:'القرض المطلوب'},mRequestedD:{en:'Financing amount requested by the applicant.',ar:'مبلغ التمويل الذي طلبه مقدم الطلب.'},mCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},mCostD:{en:'Cost per unit multiplied by farm area or number of units.',ar:'تكلفة الوحدة مضروبة في مساحة المشروع أو عدد الوحدات.'},mFlagL:{en:'Over-financing ratio',ar:'نسبة التمويل الزائد'},mFlagD:{en:'Requested loan compared with the estimated project cost.',ar:'مقارنة القرض المطلوب مع تكلفة المشروع المقدرة.'},
-  logicTitle:{en:'Cost & Financing Logic',ar:'منطق التكلفة والتمويل'},costUnitL:{en:'Cost per dunum / unit',ar:'التكلفة لكل دونم / وحدة'},logicCostL:{en:'Estimated project cost',ar:'تكلفة المشروع المقدرة'},logicRequestedL:{en:'Requested loan',ar:'القرض المطلوب'},logicGapL:{en:'Amount above estimated project cost',ar:'المبلغ الزائد عن تكلفة المشروع المقدرة'},logicNote:{en:'The system compares the requested loan with the estimated project cost, expected revenue, and risk level.',ar:'يقارن النظام القرض المطلوب بتكلفة المشروع المقدرة والإيراد المتوقع ومستوى المخاطر.'},
-  repaymentL:{en:'Repayment plan',ar:'خطة السداد'},repaymentD:{en:'Suggested according to project type and repayment period.',ar:'تُقترح وفق نوع المشروع وفترة السداد.'},reasonsTitle:{en:'Why this result?',ar:'لماذا ظهرت هذه النتيجة؟'},footerText:{en:'Prototype decision-support system for ACC Jordan · AgriFin AI — HTU',ar:'نظام أولي لدعم قرارات مؤسسة الإقراض الزراعي في الأردن · AgriFin AI — جامعة الحسين التقنية'},
-  loading:{en:'Analyzing the application…',ar:'جارٍ تحليل الطلب…'},success:{en:'Assessment completed successfully.',ar:'تم تحليل الطلب بنجاح.'},error:{en:'The assessment could not be completed. Please check the server and try again.',ar:'تعذر إكمال التقييم. تحقق من الخادم وحاول مرة أخرى.'}
+  brandSub:{
+    en:'Agricultural Loan Decision Support',
+    ar:'دعم قرارات التمويل الزراعي'
+  },
+  assessmentNav:{
+    en:'Loan Assessment',
+    ar:'تقييم طلب التمويل'
+  },
+  dashboardLink:{
+    en:'Analytics Dashboard ↗',
+    ar:'لوحة التحليلات ↗'
+  },
+  dashboardTitle:{
+    en:'Opens in a new tab',
+    ar:'تفتح في تبويب جديد'
+  },
+  eyebrow:{
+    en:'AI-powered agricultural lending',
+    ar:'تمويل زراعي مدعوم بالذكاء الاصطناعي'
+  },
+  heroTitle:{
+    en:'Faster, fairer, and more sustainable agricultural loan decisions.',
+    ar:'قرارات تمويل زراعي أسرع وأكثر عدالة واستدامة.'
+  },
+  heroText:{
+    en:'AgriFin AI combines project cost estimation, eligibility rules, and machine-learning risk scoring to support Agricultural Credit Corporation lending officers with a clear recommendation and transparent reasons.',
+    ar:'تجمع منصة AgriFin AI بين تقدير تكلفة المشروع وقواعد الأهلية ودرجة المخاطر بالذكاء الاصطناعي لدعم موظف الإقراض الزراعي بتوصية واضحة وأسباب قابلة للفهم.'
+  },
+  startBtn:{
+    en:'Start Assessment',
+    ar:'ابدأ التقييم'
+  },
+  heroDashboardLink:{
+    en:'Open Dashboard ↗',
+    ar:'افتح لوحة التحليلات ↗'
+  },
+  stat1:{
+    en:'AI risk score with clear risk class',
+    ar:'درجة مخاطر ذكية مع تصنيف واضح'
+  },
+  stat2:{
+    en:'Maximum eligible financing baseline',
+    ar:'خط أساس للحد الأعلى للتمويل المؤهل'
+  },
+  stat3:{
+    en:'Dashboard views for portfolio, lending, and risk',
+    ar:'واجهات للمحفظة والإقراض والمخاطر'
+  },
+  stat4:{
+    en:'Bilingual and accessibility-ready interface',
+    ar:'واجهة عربية وإنجليزية تدعم سهولة الوصول'
+  },
+  formTitle:{
+    en:'Agricultural Loan Assessment',
+    ar:'تقييم طلب التمويل الزراعي'
+  },
+  formHint:{
+    en:'Enter the farmer and project information. The model will calculate risk, project cost, eligible financing, and a recommended loan amount.',
+    ar:'أدخل بيانات المزارع والمشروع. سيحسب النظام المخاطر وتكلفة المشروع والتمويل المؤهل ومبلغ القرض المقترح.'
+  },
+  lGovernorate:{
+    en:'Governorate',
+    ar:'المحافظة'
+  },
+  lGender:{
+    en:'Applicant gender',
+    ar:'جنس مقدم الطلب'
+  },
+  lProject:{
+    en:'Project type',
+    ar:'نوع المشروع'
+  },
+  lCrop:{
+    en:'Crop or activity',
+    ar:'المحصول أو النشاط'
+  },
+  lIrrigation:{
+    en:'Irrigation type',
+    ar:'نوع الري'
+  },
+  lWater:{
+    en:'Water availability',
+    ar:'توفر المياه'
+  },
+  lArea:{
+    en:'Farm area / units',
+    ar:'مساحة المزرعة / عدد الوحدات'
+  },
+  lYears:{
+    en:'Repayment period (years)',
+    ar:'فترة السداد (بالسنوات)'
+  },
+  lRequested:{
+    en:'Requested loan (JOD)',
+    ar:'القرض المطلوب (دينار)'
+  },
+  lRevenue:{
+    en:'Expected annual revenue (JOD)',
+    ar:'الإيراد السنوي المتوقع (دينار)'
+  },
+  lFirst:{
+    en:'First-time borrower?',
+    ar:'مقترض لأول مرة؟'
+  },
+  lMethod:{
+    en:'Financing method',
+    ar:'طريقة التمويل'
+  },
+  submitText:{
+    en:'Analyze Application',
+    ar:'تحليل الطلب'
+  },
+  exampleBtn:{
+    en:'Load Example',
+    ar:'تحميل مثال'
+  },
+  resultTitle:{
+    en:'Decision Support Result',
+    ar:'نتيجة دعم القرار'
+  },
+  resultHint:{
+    en:'The recommendation supports the lending officer and does not replace the final institutional decision.',
+    ar:'التوصية تدعم موظف الإقراض ولا تستبدل القرار المؤسسي النهائي.'
+  },
+  emptyTitle:{
+    en:'No assessment yet',
+    ar:'لا توجد نتيجة بعد'
+  },
+  emptyText:{
+    en:'Complete the form and select “Analyze Application” to view the AI-supported result.',
+    ar:'أكمل النموذج واضغط «تحليل الطلب» لعرض النتيجة المدعومة بالذكاء الاصطناعي.'
+  },
+  scoreDenom:{
+    en:'out of 100',
+    ar:'من 100'
+  },
+  decisionHeading:{
+    en:'Recommended financing decision',
+    ar:'التوصية التمويلية'
+  },
+  decisionSummary:{
+    en:'The platform combines the model score with estimated project cost and financing eligibility.',
+    ar:'تجمع المنصة بين درجة النموذج وتكلفة المشروع المقدرة وحد التمويل المؤهل.'
+  },
+  mRecommendedL:{
+    en:'Recommended loan',
+    ar:'القرض المقترح'
+  },
+  mEligibleL:{
+    en:'Maximum eligible financing',
+    ar:'الحد الأعلى للتمويل المؤهل'
+  },
+  mCostL:{
+    en:'Estimated project cost',
+    ar:'تكلفة المشروع المقدرة'
+  },
+  mRatioL:{
+    en:'Overfinancing ratio',
+    ar:'نسبة التمويل الزائد'
+  },
+  routeL:{
+    en:'Approval route',
+    ar:'مسار الموافقة'
+  },
+  repaymentL:{
+    en:'Repayment plan',
+    ar:'خطة السداد'
+  },
+  reasonsTitle:{
+    en:'Why this result?',
+    ar:'لماذا ظهرت هذه النتيجة؟'
+  },
+  footerText:{
+    en:'Prototype decision-support system for ACC Jordan · AgriFin AI — HTU',
+    ar:'نظام أولي لدعم قرارات مؤسسة الإقراض الزراعي في الأردن · AgriFin AI — جامعة الحسين التقنية'
+  },
+  repaymentScheduleTitle:{
+    en:'Proposed repayment schedule',
+    ar:'جدول السداد المقترح'
+  },
+  repaymentScheduleHint:{
+    en:"A prototype schedule aligned with the project's expected income cycle.",
+    ar:'خطة افتراضية متوافقة مع دورة الدخل المتوقعة للمشروع.'
+  },
+  rpPlanL:{
+    en:'Plan type',
+    ar:'نوع الخطة'
+  },
+  rpFrequencyL:{
+    en:'Frequency',
+    ar:'دورية السداد'
+  },
+  rpGraceL:{
+    en:'Grace period',
+    ar:'فترة السماح'
+  },
+  rpCountL:{
+    en:'Number of installments',
+    ar:'عدد الأقساط'
+  },
+  rpFirstL:{
+    en:'First payment',
+    ar:'أول استحقاق'
+  },
+  rpAmountL:{
+    en:'Estimated installment',
+    ar:'القسط التقديري'
+  },
+  rpNoH:{
+    en:'No.',
+    ar:'القسط'
+  },
+  rpDueH:{
+    en:'Due date',
+    ar:'تاريخ الاستحقاق'
+  },
+  rpTypeH:{
+    en:'Type',
+    ar:'النوع'
+  },
+  rpAmountH:{
+    en:'Estimated amount',
+    ar:'القيمة التقديرية'
+  },
+  rpBalanceH:{
+    en:'Remaining balance',
+    ar:'الرصيد المتبقي'
+  },
+  pdfExportBtn:{
+    en:'Export PDF',
+    ar:'تصدير PDF'
+  },
+  wordExportBtn:{
+    en:'Export Word',
+    ar:'تصدير Word'
+  },
+  yearsText:{
+    en:'years',
+    ar:'سنوات'
+  },
+  showingRows:{
+    en:'Showing the first 12 installments on screen. The complete schedule is included in the exported report.',
+    ar:'يتم عرض أول 12 قسطاً على الشاشة، وتظهر الخطة كاملة في التقرير المصدّر.'
+  },
+  exportPreparing:{
+    en:'Preparing the report…',
+    ar:'جارٍ تجهيز التقرير…'
+  },
+  exportError:{
+    en:'The report could not be exported.',
+    ar:'تعذر تصدير التقرير.'
+  },
+  loading:{
+    en:'Analyzing the application…',
+    ar:'جارٍ تحليل الطلب…'
+  },
+  success:{
+    en:'Assessment completed successfully.',
+    ar:'تم تحليل الطلب بنجاح.'
+  },
+  error:{
+    en:'The assessment could not be completed. Please check the server and try again.',
+    ar:'تعذر إكمال التقييم. تحقق من الخادم وحاول مرة أخرى.'
+  }
 };
-
-function tr(key){return (T[key]&&T[key][LANG])||key}
-function fillSelect(id,items,selected){const el=$(id);el.innerHTML=items.map(x=>`<option value="${x[0]}" ${x[0]===selected?'selected':''}>${LANG==='ar'?x[2]:x[1]}</option>`).join('')}
-function updateDashboardLinks(){const q=new URLSearchParams({lang:LANG,theme:THEME}).toString();['dashboardLink','heroDashboardLink'].forEach(id=>{$(id).href='/dashboard?'+q;$(id).title=tr('dashboardTitle')})}
-function setTheme(theme,persist=true){
-  THEME=['light','dark','cb'].includes(theme)?theme:'light';
-  document.body.dataset.theme=THEME;
-  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active',b.dataset.t===THEME));
-  if(persist)localStorage.setItem(THEME_KEY,THEME);
-  updateDashboardLinks();
+function tr(key){
+  return (T[key]&&T[key][LANG])||key
 }
-function chatText(en,ar){return LANG==='ar'?ar:en}
-function setChatOpen(open){
-  const panel=$('chatPanel');
-  const launcher=$('chatLauncher');
-  panel.classList.toggle('open',open);
-  panel.setAttribute('aria-hidden',String(!open));
-  launcher.setAttribute('aria-expanded',String(open));
-  launcher.setAttribute('aria-label',open
-    ?chatText('Close AgriFin Assistant','إغلاق مساعد AgriFin')
-    :chatText('Open AgriFin Assistant','فتح مساعد AgriFin'));
-  $('chatClose').setAttribute('aria-label',chatText('Close assistant','إغلاق المساعد'));
-  $('chatSend').setAttribute('aria-label',chatText('Send message','إرسال الرسالة'));
-  $('chatInput').setAttribute('aria-label',chatText('Chat message','رسالة المحادثة'));
-  $('chatInput').placeholder=chatText('Ask about a field or result…','اسأل عن حقل أو نتيجة…');
-  if(open)setTimeout(()=>$('chatInput').focus(),120);
-}
-function appendChatMessage(text,role='assistant'){
-  const row=document.createElement('div');
-  row.className=`chat-message ${role}`;
-  const bubble=document.createElement('div');
-  bubble.className='chat-bubble';
-  bubble.textContent=text;
-  row.appendChild(bubble);
-  $('chatBody').appendChild(row);
-  $('chatBody').scrollTop=$('chatBody').scrollHeight;
-}
-function normalizeChatText(value){
-  return String(value||'')
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u064B-\u065F\u0670]/g,'')
-    .replace(/[أإآ]/g,'ا')
-    .replace(/ة/g,'ه')
-    .replace(/ى/g,'ي')
-    .replace(/[^\p{L}\p{N}%]+/gu,' ')
-    .replace(/\s+/g,' ')
-    .trim();
-}
-function chatMoney(value){
-  const number=Number(value)||0;
-  return LANG==='ar'
-    ?`${number.toLocaleString('ar-JO',{maximumFractionDigits:0})} د.أ`
-    :`JD ${number.toLocaleString('en-US',{maximumFractionDigits:0})}`;
-}
-function currentFieldValue(id){
+function fillSelect(id, items, selected){
   const el=$(id);
-  if(!el)return '';
-  if(el.tagName==='SELECT'){
-    const option=el.options[el.selectedIndex];
-    return option?option.textContent.trim():'';
-  }
-  return String(el.value||'').trim();
+  el.innerHTML=items.map(x=>`<option value="${x[0]}" ${x[0]===selected?'selected':''}>${LANG==='ar'?x[2]:x[1]}</option>`).join('')
 }
-function includesAny(text,phrases){
-  return phrases.some(phrase=>text.includes(normalizeChatText(phrase)));
+function updateDashboardLinks(){
+  const q=new URLSearchParams({
+    lang:LANG, theme:THEME
+  }).toString();
+  ['dashboardLink', 'heroDashboardLink'].forEach(id=>{
+    $(id).href='/dashboard?'+q;$(id).title=tr('dashboardTitle')
+  })
 }
-function localChatAnswer(question){
-  const q=normalizeChatText(question);
-  const data=LAST_ASSESSMENT||null;
-
-  if(includesAny(q,['مرحبا','اهلا','السلام عليكم','hello','hi','hey'])){
-    return chatText(
-      'Hello! I can explain AgriFin input fields, calculations, and the current risk assessment result.',
-      'أهلًا! أستطيع شرح حقول AgriFin والحسابات ونتيجة تقييم المخاطر الحالية.'
-    );
-  }
-
-  if(includesAny(q,['نوع الري','الري','irrigation type','irrigation'])){
-    const selected=currentFieldValue('irrigationType');
-    return chatText(
-      `Irrigation type means the method used to deliver water to the crop, such as drip, surface, rainfed, or controlled greenhouse irrigation. It affects water efficiency and production risk.${selected?` The current selection is: ${selected}.`:''}`,
-      `نوع الري هو الطريقة المستخدمة لإيصال المياه للمحصول، مثل الري بالتنقيط أو السطحي أو البعلي أو الري المتحكم به داخل البيوت المحمية. يؤثر هذا الحقل في كفاءة استخدام المياه ومخاطر الإنتاج.${selected?` النوع المحدد حاليًا: ${selected}.`:''}`
-    );
-  }
-
-  if(includesAny(q,['الايراد السنوي المتوقع','الايراد المتوقع','الدخل السنوي المتوقع','expected annual revenue','expected revenue'])){
-    const revenue=Number(currentFieldValue('expectedRevenue'))||0;
-    return chatText(
-      `Expected annual revenue is the total sales income the agricultural project is expected to generate during one year. It is not necessarily net profit, because operating costs may still need to be deducted. The system uses it to estimate repayment capacity.${revenue?` The entered value is ${chatMoney(revenue)}.`:''}`,
-      `الإيراد السنوي المتوقع هو إجمالي قيمة المبيعات التي يُتوقع أن يحققها المشروع الزراعي خلال سنة واحدة. وهو ليس بالضرورة صافي الربح؛ لأن تكاليف التشغيل قد تُخصم منه لاحقًا. يستخدمه النظام لتقدير قدرة المشروع على السداد.${revenue?` القيمة المدخلة حاليًا هي ${chatMoney(revenue)}.`:''}`
-    );
-  }
-
-
-  if(includesAny(q,['القرض المطلوب','requested loan'])){
-    const requested=Number(currentFieldValue('requestedLoan'))||0;
-    return chatText(
-      `The requested loan is the financing amount the farmer asks the institution to provide. It is compared with the estimated project cost, expected revenue, and risk level.${requested?` The entered amount is ${chatMoney(requested)}.`:''}`,
-      `القرض المطلوب هو مبلغ التمويل الذي يطلب المزارع من المؤسسة توفيره. يقارنه النظام مع تكلفة المشروع والإيراد المتوقع ودرجة المخاطر.${requested?` المبلغ المدخل حاليًا هو ${chatMoney(requested)}.`:''}`
-    );
-  }
-
-  if(includesAny(q,['مساحه المزرعه','مساحة المزرعة','الدونم','farm area','dunum'])){
-    const area=Number(currentFieldValue('farmArea'))||0;
-    return chatText(
-      `Farm area is the cultivated or project area measured in dunums. The system uses it with the activity cost per unit to estimate total project cost.${area?` The entered area is ${area} dunums.`:''}`,
-      `مساحة المزرعة هي المساحة المزروعة أو المخصصة للمشروع وتقاس بالدونم. يستخدمها النظام مع تكلفة النشاط لكل دونم أو وحدة لتقدير تكلفة المشروع.${area?` المساحة المدخلة حاليًا هي ${area} دونم.`:''}`
-    );
-  }
-
-  if(includesAny(q,['خبره المزارع','خبرة المزارع','farmer experience','experience'])){
-    const years=Number(currentFieldValue('farmerExperience'))||0;
-    return chatText(
-      `Farmer experience is the number of years the applicant has worked in the same or a closely related agricultural activity. More relevant experience can reduce operational uncertainty.${years?` The entered experience is ${years} years.`:''}`,
-      `خبرة المزارع هي عدد السنوات التي عمل فيها مقدم الطلب في النشاط الزراعي نفسه أو في نشاط قريب منه. الخبرة المرتبطة بالمشروع قد تقلل عدم اليقين التشغيلي.${years?` الخبرة المدخلة حاليًا هي ${years} سنوات.`:''}`
-    );
-  }
-
-  if(includesAny(q,['توفر المياه','المياه','water availability'])){
-    const selected=currentFieldValue('waterAvailability');
-    return chatText(
-      `Water availability describes how reliably the project can access enough water for production. Low availability generally increases production and repayment risk.${selected?` The current selection is: ${selected}.`:''}`,
-      `توفر المياه يعبّر عن مدى قدرة المشروع على الحصول على كمية كافية ومستقرة من المياه للإنتاج. انخفاض توفر المياه يرفع عادةً مخاطر الإنتاج والسداد.${selected?` المستوى المحدد حاليًا: ${selected}.`:''}`
-    );
-  }
-
-  if(includesAny(q,['درجه المخاطر','درجة المخاطر','risk score','risk degree'])){
-    if(data){
-      const score=Number(data.risk_score)||0;
-      return chatText(
-        `The risk score is ${score.toFixed(1).replace('.0','')} out of 100. A lower score means lower estimated risk: below 40 is low risk, 40 to below 70 is medium risk, and 70 or more is high risk. This is decision support, not the final institutional decision.`,
-        `درجة المخاطر الحالية هي ${score.toFixed(1).replace('.0','')} من 100. كلما انخفضت الدرجة كانت المخاطر المقدرة أقل: أقل من 40 مخاطر منخفضة، ومن 40 إلى أقل من 70 مخاطر متوسطة، و70 فأعلى مخاطر مرتفعة. النتيجة أداة مساندة وليست القرار المؤسسي النهائي.`
-      );
-    }
-    return chatText(
-      'The risk score ranges from 0 to 100. Below 40 is low risk, 40 to below 70 is medium risk, and 70 or more is high risk.',
-      'درجة المخاطر تتراوح من 0 إلى 100. أقل من 40 مخاطر منخفضة، ومن 40 إلى أقل من 70 مخاطر متوسطة، و70 فأعلى مخاطر مرتفعة.'
-    );
-  }
-
-  if(
-    (q.includes('تكلفه')&&(q.includes('دونم')||q.includes('وحده'))) ||
-    includesAny(q,[
-      'التكلفه لكل دونم',
-      'التكلفة لكل دونم',
-      'تكلفه الدونم',
-      'تكلفة الدونم',
-      'سعر الدونم',
-      'التكلفه لكل وحده',
-      'التكلفة لكل وحدة',
-      'تكلفه الوحده',
-      'تكلفة الوحدة',
-      'cost per dunum',
-      'cost per unit',
-      'unit cost'
-    ])
-  ){
-    const activity=currentFieldValue('cropActivity');
-    if(data){
-      const unit=Number(data.cost_per_unit_jod)||0;
-      const area=Number(currentFieldValue('farmArea'))||0;
-      const cost=Number(data.estimated_project_cost_jod)||0;
-      return chatText(
-        `Cost per dunum or unit is the reference cost assigned to the selected agricultural activity for one dunum or one production unit. It is used to estimate total project cost, not to determine the requested loan. For the current activity${activity?` (${activity})`:''}, the reference cost is ${chatMoney(unit)}. The system then calculates: ${chatMoney(unit)} × ${area||'the entered number of units'} = ${chatMoney(cost)}.`,
-        `التكلفة لكل دونم أو وحدة هي التكلفة المرجعية المعتمدة للنشاط الزراعي المحدد مقابل دونم واحد أو وحدة إنتاج واحدة. يستخدمها النظام لتقدير تكلفة المشروع الكلية، وليست قيمة القرض المطلوب. للنشاط الحالي${activity?` (${activity})`:''} تبلغ التكلفة المرجعية ${chatMoney(unit)}. ثم يحسب النظام: ${chatMoney(unit)} × ${area||'عدد الوحدات المدخلة'} = ${chatMoney(cost)}.`
-      );
-    }
-    return chatText(
-      'Cost per dunum or unit is the reference cost for one dunum or one production unit of the selected activity. The system multiplies it by the entered farm area or number of units to estimate total project cost.',
-      'التكلفة لكل دونم أو وحدة هي التكلفة المرجعية لدونم واحد أو وحدة إنتاج واحدة من النشاط المحدد. يضربها النظام في مساحة المزرعة أو عدد الوحدات المدخلة لتقدير تكلفة المشروع الكلية.'
-    );
-  }
-
-  if(includesAny(q,['تكلفه المشروع المقدره','تكلفة المشروع المقدرة','estimated project cost','project cost'])){
-    if(data){
-      const cost=Number(data.estimated_project_cost_jod)||0;
-      const unit=Number(data.cost_per_unit_jod)||0;
-      const area=Number(currentFieldValue('farmArea'))||0;
-      return chatText(
-        `The estimated project cost is calculated from the selected activity cost per dunum or unit multiplied by the entered project size. In the current application: ${chatMoney(unit)} × ${area||'the entered units'} = ${chatMoney(cost)}.`,
-        `تكلفة المشروع المقدرة تُحسب من تكلفة النشاط لكل دونم أو وحدة مضروبة في حجم المشروع المدخل. في الطلب الحالي: ${chatMoney(unit)} × ${area||'عدد الوحدات المدخلة'} = ${chatMoney(cost)}.`
-      );
-    }
-    return chatText(
-      'Estimated project cost is based on the selected crop or activity cost per dunum or unit multiplied by the entered project size.',
-      'تكلفة المشروع المقدرة تعتمد على تكلفة المحصول أو النشاط لكل دونم أو وحدة مضروبة في حجم المشروع المدخل.'
-    );
-  }
-
-  if(includesAny(q,['القرض المقترح','التوصيه التمويليه','التوصية التمويلية','recommended loan','suggested loan'])){
-    if(data){
-      const requested=Number(data.requested_loan_jod)||0;
-      const cost=Number(data.estimated_project_cost_jod)||0;
-      const recommended=Number(data.recommended_loan_jod)||0;
-      const score=Number(data.risk_score)||0;
-      const factor=score<40?'100%':score<70?'90%':'70%';
-      return chatText(
-        `The recommended loan starts from the lower of the requested amount (${chatMoney(requested)}) and the estimated project cost (${chatMoney(cost)}), then applies the ${factor} risk adjustment. The current recommendation is ${chatMoney(recommended)}.`,
-        `يبدأ احتساب القرض المقترح من المبلغ الأقل بين القرض المطلوب (${chatMoney(requested)}) وتكلفة المشروع المقدرة (${chatMoney(cost)})، ثم يُطبق معامل المخاطر بنسبة ${factor}. التوصية الحالية هي ${chatMoney(recommended)}.`
-      );
-    }
-    return chatText(
-      'The recommended loan uses the lower of the requested amount and the estimated project cost, then applies a risk adjustment.',
-      'القرض المقترح يعتمد على المبلغ الأقل بين القرض المطلوب وتكلفة المشروع المقدرة، ثم يُطبق عليه معامل المخاطر.'
-    );
-  }
-
-  if(includesAny(q,['نسبه التمويل الزائد','نسبة التمويل الزائد','over financing ratio','overfinancing ratio'])){
-    if(data){
-      const ratio=Number(data.overfinancing_ratio)||0;
-      const requested=Number(data.requested_loan_jod)||0;
-      const cost=Number(data.estimated_project_cost_jod)||0;
-      return chatText(
-        `The over-financing ratio compares the requested loan with the estimated project cost: ${chatMoney(requested)} ÷ ${chatMoney(cost)} = ${ratio.toFixed(2)}×. A value above 1 means the request exceeds the estimated project cost.`,
-        `نسبة التمويل الزائد تقارن القرض المطلوب بتكلفة المشروع المقدرة: ${chatMoney(requested)} ÷ ${chatMoney(cost)} = ${ratio.toFixed(2)}×. إذا كانت النسبة أكبر من 1 فهذا يعني أن الطلب يتجاوز تكلفة المشروع المقدرة.`
-      );
-    }
-    return chatText(
-      'The over-financing ratio equals the requested loan divided by the estimated project cost. A value above 1 means the request exceeds the estimated project cost.',
-      'نسبة التمويل الزائد تساوي القرض المطلوب مقسومًا على تكلفة المشروع المقدرة. إذا كانت أكبر من 1 فهذا يعني أن الطلب يتجاوز تكلفة المشروع المقدرة.'
-    );
-  }
-
-  if(includesAny(q,['خطه السداد','خطة السداد','repayment plan','repayment frequency'])){
-    if(data&&data.repayment_plan){
-      return chatText(
-        `The repayment plan describes the proposed payment frequency based on the project type and repayment period. The current plan is: ${data.repayment_plan}.`,
-        `خطة السداد توضح دورية السداد المقترحة وفق نوع المشروع ومدة التمويل. الخطة الحالية هي: ${data.repayment_plan}.`
-      );
-    }
-    return chatText(
-      'The repayment plan describes the proposed repayment frequency, such as monthly, semi-annual, or seasonal after harvest.',
-      'خطة السداد توضح دورية السداد المقترحة، مثل شهري أو نصف سنوي أو موسمي بعد الحصاد.'
-    );
-  }
-
-  if(includesAny(q,['لماذا ظهرت هذه النتيجه','لماذا ظهرت هذه النتيجة','ليش النتيجه','ليش النتيجة','why this result','why did this result'])){
-    if(data&&Array.isArray(data.risk_reasons)&&data.risk_reasons.length){
-      return data.risk_reasons.map(item=>`• ${item.text}`).join('\n');
-    }
-    return chatText(
-      'Run the loan assessment first, then ask me again so I can explain the factors behind the current result.',
-      'نفّذ تقييم الطلب أولًا، ثم اسألني مرة أخرى حتى أشرح العوامل التي أدت إلى النتيجة الحالية.'
-    );
-  }
-
-  if(includesAny(q,['نوع المشروع','project type'])){
-    const selected=currentFieldValue('projectType');
-    return chatText(
-      `Project type identifies the broad agricultural financing category, such as open-field vegetables, greenhouses, livestock, irrigation, machinery, or storage. It helps determine the relevant activity and cost logic.${selected?` The current selection is: ${selected}.`:''}`,
-      `نوع المشروع يحدد الفئة الزراعية العامة للتمويل، مثل الخضار المكشوفة أو البيوت المحمية أو الثروة الحيوانية أو الري أو المعدات أو التخزين. يساعد في تحديد النشاط ومنطق التكلفة المناسب.${selected?` النوع المحدد حاليًا: ${selected}.`:''}`
-    );
-  }
-
-  if(includesAny(q,['المحصول','النشاط','crop','activity'])){
-    const selected=currentFieldValue('cropActivity');
-    return chatText(
-      `Crop or activity specifies the exact production activity being financed. The system uses it to select the estimated cost per dunum or unit.${selected?` The current selection is: ${selected}.`:''}`,
-      `المحصول أو النشاط يحدد النشاط الإنتاجي الدقيق المطلوب تمويله. يستخدمه النظام لاختيار التكلفة التقديرية لكل دونم أو وحدة.${selected?` النشاط المحدد حاليًا: ${selected}.`:''}`
-    );
-  }
-
-  if(includesAny(q,['اول مره','أول مرة','مقترض لاول مره','مقترض لأول مرة','first time borrower'])){
-    return chatText(
-      'First-time borrower indicates whether the applicant has no previous borrowing record with the institution. A limited repayment history may increase uncertainty, but it does not automatically mean rejection.',
-      'المقترض لأول مرة هو مقدم طلب لا يملك سجل اقتراض سابقًا لدى المؤسسة. محدودية سجل السداد قد تزيد عدم اليقين، لكنها لا تعني رفض الطلب تلقائيًا.'
-    );
-  }
-
-  if(includesAny(q,['مده السداد','مدة السداد','repayment period','loan period'])){
-    const years=Number(currentFieldValue('periodYears'))||0;
-    return chatText(
-      `Repayment period is the number of years requested to repay the financing. It helps determine the loan term category and repayment frequency.${years?` The entered period is ${years} years.`:''}`,
-      `مدة السداد هي عدد السنوات المطلوبة لسداد التمويل. يستخدمها النظام لتحديد فئة مدة القرض ودورية السداد.${years?` المدة المدخلة حاليًا هي ${years} سنوات.`:''}`
-    );
-  }
-
-  return chatText(
-    'I can explain fields such as irrigation type, expected annual revenue, requested loan, farm area, water availability, cost per dunum or unit, risk score, estimated project cost, recommended loan, over-financing ratio, and repayment plan. Please ask about one of them.',
-    'أستطيع شرح حقول مثل نوع الري، الإيراد السنوي المتوقع، القرض المطلوب، مساحة المزرعة، توفر المياه، التكلفة لكل دونم أو وحدة، درجة المخاطر، تكلفة المشروع المقدرة، القرض المقترح، نسبة التمويل الزائد، وخطة السداد. اسألني عن أحدها.'
-  );
+function setTheme(theme, persist=true){
+  THEME=['light', 'dark', 'cb'].includes(theme)?theme:'light';
+  document.body.dataset.theme=THEME;
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.t===THEME));
+  if(persist)localStorage.setItem(THEME_KEY, THEME);
+  updateDashboardLinks()
 }
-function submitChatMessage(message){
-  const text=String(message||'').trim();
-  if(!text)return;
-  appendChatMessage(text,'user');
-  $('chatInput').value='';
-  setTimeout(()=>appendChatMessage(localChatAnswer(text),'assistant'),250);
+function setLanguage(lang, persist=true){
+  LANG=lang==='ar'?'ar':'en';
+  document.body.dir=LANG==='ar'?'rtl':'ltr';
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('active', b.dataset.l===LANG));
+  if(persist)localStorage.setItem(LANG_KEY, LANG);
+  applyTranslations();
+  populateSelects();
+  updateDashboardLinks()
 }
-function refreshChatLanguage(){
-  if(!$('chatPanel'))return;
-  $('chatInput').placeholder=chatText('Ask about a field or result…','اسأل عن حقل أو نتيجة…');
-  $('chatLauncher').setAttribute('aria-label',chatText('Open AgriFin Assistant','فتح مساعد AgriFin'));
-  $('chatClose').setAttribute('aria-label',chatText('Close assistant','إغلاق المساعد'));
-  $('chatSend').setAttribute('aria-label',chatText('Send message','إرسال الرسالة'));
-  $('chatInput').setAttribute('aria-label',chatText('Chat message','رسالة المحادثة'));
+function applyTranslations(){
+  Object.keys(T).forEach(key=>{
+    const el=$(key);if(el)el.textContent=tr(key)
+  });
+  $('dashboardLink').title=tr('dashboardTitle');
+  $('heroDashboardLink').title=tr('dashboardTitle');
+  if(LAST_RESULT?.repayment_schedule)showRepaymentSchedule(LAST_RESULT.repayment_schedule)
 }
-$('chatLauncher').addEventListener('click',()=>setChatOpen(!$('chatPanel').classList.contains('open')));
-$('chatClose').addEventListener('click',()=>setChatOpen(false));
-$('chatForm').addEventListener('submit',e=>{e.preventDefault();submitChatMessage($('chatInput').value)});
-$('chatInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatForm').requestSubmit()}
-});
-document.querySelectorAll('.chat-chip').forEach(button=>button.addEventListener('click',()=>{
-  const question=button.textContent.trim();
-  setChatOpen(true);
-  submitChatMessage(question);
-}));
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('chatPanel').classList.contains('open'))setChatOpen(false)});
-
-function setLanguage(lang,persist=true){LANG=lang==='ar'?'ar':'en';document.body.dir=LANG==='ar'?'rtl':'ltr';document.documentElement.lang=LANG;document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('active',b.dataset.l===LANG));if(persist)localStorage.setItem(LANG_KEY,LANG);applyTranslations();populateSelects();updateDashboardLinks();refreshChatLanguage()}
-function applyTranslations(){Object.keys(T).forEach(key=>{const el=$(key);if(el)el.textContent=tr(key)});$('dashboardLink').title=tr('dashboardTitle');$('heroDashboardLink').title=tr('dashboardTitle')}
-function populateSelects(){const current=id=>$(id).value;const keep={governorate:current('governorate'),projectType:current('projectType'),cropActivity:current('cropActivity'),irrigationType:current('irrigationType'),waterAvailability:current('waterAvailability'),firstTime:current('firstTime'),financingMethod:current('financingMethod')};fillSelect('governorate',DATA.governorates,keep.governorate||'Ajloun');fillSelect('projectType',DATA.projects,keep.projectType||'Olives / Fruit Trees');fillSelect('cropActivity',DATA.crops,keep.cropActivity||'Olives');fillSelect('irrigationType',DATA.irrigation,keep.irrigationType||'Drip');fillSelect('waterAvailability',DATA.water,keep.waterAvailability||'High');fillSelect('firstTime',DATA.yesNo,keep.firstTime||'No');fillSelect('financingMethod',DATA.financing,keep.financingMethod||'فائدة')}
-function money(v){const n=Math.round(Number(v)||0).toLocaleString(LANG==='ar'?'ar-JO':'en-US');return LANG==='ar'?`${n} د.أ`:`JD ${n}`}
+function populateSelects(){
+  const current=id=>$(id).value;
+  const keep={
+    governorate:current('governorate'),
+    gender:current('gender'),
+    projectType:current('projectType'),
+    cropActivity:current('cropActivity'),
+    irrigationType:current('irrigationType'),
+    waterAvailability:current('waterAvailability'),
+    firstTime:current('firstTime'),
+    financingMethod:current('financingMethod')
+  };
+  fillSelect('governorate', DATA.governorates, keep.governorate||'Ajloun');
+  fillSelect('gender', DATA.gender, keep.gender||'ذكر');
+  fillSelect('projectType', DATA.projects, keep.projectType||'Olives / Fruit Trees');
+  fillSelect('cropActivity', DATA.crops, keep.cropActivity||'Olives');
+  fillSelect('irrigationType', DATA.irrigation, keep.irrigationType||'Drip');
+  fillSelect('waterAvailability', DATA.water, keep.waterAvailability||'High');
+  fillSelect('firstTime', DATA.yesNo, keep.firstTime||'No');
+  fillSelect('financingMethod', DATA.financing, keep.financingMethod||'فائدة')
+}
+function money(v){
+  const n=Math.round(Number(v)||0).toLocaleString(LANG==='ar'?'ar-JO':'en-US');
+  return LANG==='ar'?`${n} د.أ`:`JD ${n}`
+}
+function planField(plan, base){
+  return plan?.[`${base}_${LANG}`]||plan?.[base]||'—'
+}
+function money2(v){
+  const n=Number(v)||0;
+  const value=n.toLocaleString(LANG==='ar'?'ar-JO':'en-US', {
+    minimumFractionDigits:2, maximumFractionDigits:2
+  });
+  return LANG==='ar'?`${value} د.أ`:`JD ${value}`
+}
+function showRepaymentSchedule(plan){
+  if(!plan)return;
+  $('repaymentCard').classList.add('visible');
+  $('rpPlan').textContent=planField(plan, 'plan_type');
+  $('rpFrequency').textContent=planField(plan, 'frequency');
+  $('rpGrace').textContent=`${Number(plan.grace_period_years||0)} ${tr('yearsText')}`;
+  $('rpCount').textContent=Number(plan.number_of_installments||0).toLocaleString(LANG==='ar'?'ar-JO':'en-US');
+  $('rpFirst').textContent=plan.first_payment_date||'—';
+  $('rpAmount').textContent=money2(plan.estimated_installment_jod);
+  const rows=plan.schedule||[];
+  const visibleRows=rows.slice(0, 12);
+  $('repaymentTableBody').innerHTML=visibleRows.map(row=>`<tr><td>${escapeHtml(row.installment_no??'—')}</td><td>${escapeHtml(row.due_date||'—')}</td><td>${escapeHtml(row[`type_${
+    LANG
+  }
+  `]||row.type_en||'—')}</td><td>${money2(row.amount_jod)}</td><td>${money2(row.balance_after_jod)}</td></tr>`).join('');
+  $('repaymentBasis').textContent=planField(plan, 'basis');
+  $('repaymentNote').textContent=planField(plan, 'note')+(rows.length>12?` ${tr('showingRows')}`:'');
+}
 function showResult(data){
-  LAST_ASSESSMENT=data;
+  LAST_RESULT=data;
   $('emptyState').classList.add('hidden');
   $('resultContent').classList.add('visible');
-  $('exportActions').classList.add('visible');
-  const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));
-  const requested=Number(data.requested_loan_jod)||0;
-  const recommended=Number(data.recommended_loan_jod)||0;
-  const cost=Number(data.estimated_project_cost_jod)||0;
-  const gap=Math.max(0,requested-cost);
-  $('riskScore').textContent=score.toFixed(1).replace('.0','');
+  const score=Math.max(0, Math.min(100, Number(data.risk_score)||0));
+  $('riskScore').textContent=score.toFixed(1).replace('.0', '');
   const cls=(data.risk_class||'Low').toLowerCase();
   const ring=cls==='high'?'var(--bad)':cls==='medium'?'var(--warn)':'var(--good)';
-  $('scoreRing').style.setProperty('--score',score);
-  $('scoreRing').style.setProperty('--ring',ring);
+  $('scoreRing').style.setProperty('--score', score);
+  $('scoreRing').style.setProperty('--ring', ring);
   $('riskBadge').className='risk-badge '+cls;
   $('riskBadge').textContent=data.risk_class_label||data.risk_class;
-  $('headlineLoan').textContent=money(recommended);
-  $('decisionSummary').textContent=LANG==='ar'
-    ?`يوصي النموذج بقرض قدره ${money(recommended)} من أصل ${money(requested)} مطلوبة، بعد مقارنة القرض المطلوب بتكلفة المشروع ودرجة المخاطر وعوامل المياه والإيراد وفترة السداد.`
-    :`The model recommends ${money(recommended)} from a requested ${money(requested)}, after comparing the requested amount with project cost, risk score, water, revenue, and repayment period.`;
-  $('mRecommended').textContent=money(recommended);
-  $('mRequested').textContent=money(requested);
-  $('mCost').textContent=money(cost);
-  const overRatio=Number(data.overfinancing_ratio)||0;
-  $('mFlag').textContent=`${overRatio.toFixed(2).replace(/\.?0+$/,'')}×`;
-  $('costUnit').textContent=money(data.cost_per_unit_jod);
-  $('logicCost').textContent=money(cost);
-  $('logicRequested').textContent=money(requested);
-  $('logicGap').textContent=money(gap);
+  $('mRecommended').textContent=money(data.recommended_loan_jod);
+  $('mEligible').textContent=money(data.max_eligible_financing_jod);
+  $('mCost').textContent=money(data.estimated_project_cost_jod);
+  $('mRatio').textContent=`${Number(data.overfinancing_ratio||0).toFixed(2)}×`;
+  $('routeValue').textContent=data.approval_route||'—';
   $('repaymentValue').textContent=data.repayment_plan||'—';
   $('reasonList').innerHTML=(data.risk_reasons||[]).map(r=>`<div class="reason ${r.level||''}">${escapeHtml(r.text||'')}</div>`).join('');
+  showRepaymentSchedule(data.repayment_schedule)
 }
-function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function escapeHtml(value){
+  return String(value).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function formPayload(){const fd=new FormData($('loanForm'));return Object.fromEntries(fd.entries())}
-async function submitAssessment(e){e.preventDefault();const btn=$('submitBtn');btn.classList.add('loading');$('formStatus').textContent=tr('loading');try{const payload={...formPayload(),lang:LANG};const res=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Request failed');showResult(data);$('formStatus').textContent=tr('success')}catch(err){console.error(err);$('formStatus').textContent=tr('error')}finally{btn.classList.remove('loading')}}
-function loadExample(){const values={governorate:'Irbid',projectType:'Olives / Fruit Trees',cropActivity:'Olives',irrigationType:'Drip',waterAvailability:'High',farmArea:'10',periodYears:'5',requestedLoan:'1000',expectedRevenue:'4500',firstTime:'No',financingMethod:'فائدة'};Object.entries(values).forEach(([k,v])=>{$(k).value=v});$('formStatus').textContent=''}
+async function submitAssessment(e){e.preventDefault();const btn=$('submitBtn');btn.classList.add('loading');$('formStatus').textContent=tr('loading');try{const payload={...formPayload(),lang:LANG};LAST_PAYLOAD=payload;const res=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const data=await res.json();if(!res.ok)throw new Error(data.error||'Request failed');showResult(data);$('formStatus').textContent=tr('success')}catch(err){console.error(err);$('formStatus').textContent=tr('error')}finally{btn.classList.remove('loading')}}
 
-function reportFileName(extension){
-  const stamp=new Date().toISOString().slice(0,19).replace('T','_').replaceAll(':','-');
-  return `AgriFin-Risk-Report_${stamp}.${extension}`;
-}
+function currentFieldValue(id){const el=$(id);if(!el)return'—';if(el.tagName==='SELECT')return el.options[el.selectedIndex]?.text||el.value;return el.value||'—'}
+function reportRowsHtml(rows){return rows.map(([label,value])=>`<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}
+function buildReportHtml(){if(!LAST_RESULT)return'';const plan=LAST_RESULT.repayment_schedule||{};const rtl=LANG==='ar';const title=rtl?'تقرير تقييم طلب التمويل الزراعي':'Agricultural Loan Assessment Report';const appTitle=rtl?'ملخص الطلب':'Application Summary';const resultTitle=rtl?'نتيجة دعم القرار':'Decision Support Result';const planTitle=rtl?'خطة السداد المقترحة':'Proposed Repayment Plan';const reasonsTitle=rtl?'أسباب النتيجة':'Why this result?';const appRows=[[tr('lGovernorate'),currentFieldValue('governorate')],[tr('lProject'),currentFieldValue('projectType')],[tr('lCrop'),currentFieldValue('cropActivity')],[tr('lYears'),currentFieldValue('periodYears')],[tr('lRequested'),money2(LAST_RESULT.requested_loan_jod)],[tr('lRevenue'),money2(LAST_RESULT.expected_annual_revenue_jod)]];const resultRows=[[tr('mRecommendedL'),money2(LAST_RESULT.recommended_loan_jod)],[tr('mEligibleL'),money2(LAST_RESULT.max_eligible_financing_jod)],[tr('mCostL'),money2(LAST_RESULT.estimated_project_cost_jod)],[tr('mRatioL'),`${Number(LAST_RESULT.overfinancing_ratio||0).toFixed(2)}×`],[tr('routeL'),LAST_RESULT.approval_route||'—'],[tr('repaymentL'),planField(plan,'plan_type')]];const planRows=[[tr('rpPlanL'),planField(plan,'plan_type')],[tr('rpFrequencyL'),planField(plan,'frequency')],[tr('rpGraceL'),`${Number(plan.grace_period_years||0)} ${tr('yearsText')}`],[tr('rpCountL'),String(plan.number_of_installments||0)],[tr('rpFirstL'),plan.first_payment_date||'—'],[tr('rpAmountL'),money2(plan.estimated_installment_jod)]];const schedule=(plan.schedule||[]).map(row=>`<tr><td>${escapeHtml(row.installment_no??'—')}</td><td>${escapeHtml(row.due_date||'—')}</td><td>${escapeHtml(row[`type_${LANG}`]||row.type_en||'—')}</td><td>${money2(row.amount_jod)}</td><td>${money2(row.balance_after_jod)}</td></tr>`).join('');const reasons=(LAST_RESULT.risk_reasons||[]).map(r=>`<li>${escapeHtml(r.text||'')}</li>`).join('');const logo=document.querySelector('.logo')?.src||'';return`<!doctype html><html lang="${LANG}" dir="${rtl?'rtl':'ltr'}"><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;color:#1f2a1f;margin:0;font-size:11px;line-height:1.45}.header{display:flex;align-items:center;gap:12px;border-bottom:3px solid #0f6b33;padding-bottom:10px;margin-bottom:14px}.header img{width:54px;height:54px;object-fit:contain}.header h1{margin:0;font-size:20px}.header p{margin:3px 0 0;color:#5a6b5a}.score{display:inline-block;background:#e7f1e8;border:1px solid #c8d8c8;border-radius:8px;padding:8px 12px;font-weight:700;margin-bottom:10px}h2{font-size:14px;color:#0f6b33;margin:15px 0 7px}table{width:100%;border-collapse:collapse;margin-bottom:10px;page-break-inside:auto}th,td{border:1px solid #d5ded5;padding:6px 7px;text-align:${rtl?'right':'left'};vertical-align:top}th{background:#e7f1e8;font-weight:700}.summary th{width:35%}.schedule{font-size:9px}.schedule thead{display:table-header-group}.schedule tr{page-break-inside:avoid}ul{margin:6px 0;padding-${rtl?'right':'left'}:20px}.note{color:#5a6b5a;font-size:9px}.footer{margin-top:16px;border-top:1px solid #d5ded5;padding-top:7px;color:#5a6b5a;font-size:9px}@media print{button{display:none}}</style></head><body><div class="header">${logo?`<img src="${logo}" alt="ACC">`:''}<div><h1>${title}</h1><p>AgriFin AI · ${new Date().toLocaleDateString(LANG==='ar'?'ar-JO':'en-GB')}</p></div></div><div class="score">${escapeHtml(LAST_RESULT.risk_class_label||LAST_RESULT.risk_class)} · ${Number(LAST_RESULT.risk_score||0).toFixed(1)}/100</div><h2>${appTitle}</h2><table class="summary">${reportRowsHtml(appRows)}</table><h2>${resultTitle}</h2><table class="summary">${reportRowsHtml(resultRows)}</table><h2>${planTitle}</h2><table class="summary">${reportRowsHtml(planRows)}</table><p>${escapeHtml(planField(plan,'basis'))}</p><table class="schedule"><thead><tr><th>${tr('rpNoH')}</th><th>${tr('rpDueH')}</th><th>${tr('rpTypeH')}</th><th>${tr('rpAmountH')}</th><th>${tr('rpBalanceH')}</th></tr></thead><tbody>${schedule}</tbody></table><p class="note">${escapeHtml(planField(plan,'note'))}</p><h2>${reasonsTitle}</h2><ul>${reasons}</ul><div class="footer">AgriFin AI — HTU · ACC Jordan decision-support prototype</div></body></html>`}
+function exportPdf(){if(!LAST_RESULT)return;const popup=window.open('','_blank','width=1000, height=800');if(!popup){$('formStatus').textContent=tr('exportError');return}popup.document.open();popup.document.write(buildReportHtml());popup.document.close();popup.onload=()=>{popup.focus();setTimeout(()=>popup.print(),250)}}
+async function exportWord(){if(!LAST_PAYLOAD||!LAST_RESULT)return;const btn=$('wordExportBtn');btn.disabled=true;$('formStatus').textContent=tr('exportPreparing');try{const payload={...LAST_PAYLOAD,lang:LANG};const res=await fetch('/api/export/word',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'Export failed')}const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`AgriFin-Risk-Report-${new Date().toISOString().slice(0,10)}.docx`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);$('formStatus').textContent=tr('success')}catch(err){console.error(err);$('formStatus').textContent=tr('exportError')}finally{btn.disabled=false}}
 
-function reportLabels(){
-  return LANG==='ar'?{
-    title:'تقرير تقييم مخاطر التمويل الزراعي',
-    subtitle:'AgriFin AI · نظام دعم قرار لمؤسسة الإقراض الزراعي',
-    generated:'تاريخ إنشاء التقرير',
-    application:'بيانات الطلب والمشروع',
-    summary:'ملخص القرار الائتماني',
-    logic:'منطق التكلفة والتمويل',
-    repayment:'خطة السداد المقترحة',
-    reasons:'أسباب النتيجة',
-    governorate:'المحافظة',project:'نوع المشروع',activity:'المحصول أو النشاط',
-    irrigation:'نوع الري',water:'توفر المياه',area:'مساحة المشروع / الوحدات',
-    years:'فترة السداد',firstTime:'مقترض لأول مرة؟',method:'طريقة التمويل',
-    score:'درجة المخاطر',risk:'تصنيف المخاطر',recommended:'القرض المقترح',
-    requested:'القرض المطلوب',cost:'تكلفة المشروع المقدرة',ratio:'نسبة التمويل الزائد',
-    unitCost:'التكلفة لكل دونم / وحدة',gap:'المبلغ الزائد عن تكلفة المشروع المقدرة',
-    yearUnit:'سنة',
-    disclaimer:'هذا التقرير أداة مساندة لموظف الإقراض ولا يمثل قرار الموافقة النهائي للمؤسسة.'
-  }:{
-    title:'Agricultural Financing Risk Assessment Report',
-    subtitle:'AgriFin AI · Decision Support for the Agricultural Credit Corporation',
-    generated:'Report generated',
-    application:'Application & Project Information',
-    summary:'Credit Decision Summary',
-    logic:'Cost & Financing Logic',
-    repayment:'Recommended Repayment Plan',
-    reasons:'Reasons Behind the Result',
-    governorate:'Governorate',project:'Project type',activity:'Crop or activity',
-    irrigation:'Irrigation type',water:'Water availability',area:'Project area / units',
-    years:'Repayment period',firstTime:'First-time borrower?',method:'Financing method',
-    score:'Risk score',risk:'Risk classification',recommended:'Recommended loan',
-    requested:'Requested loan',cost:'Estimated project cost',ratio:'Over-financing ratio',
-    unitCost:'Cost per dunum / unit',gap:'Amount above estimated project cost',
-    yearUnit:'years',
-    disclaimer:'This report supports the lending officer and does not represent the institution’s final approval decision.'
-  };
-}
-
-function reportDate(){
-  return new Intl.DateTimeFormat(LANG==='ar'?'ar-JO':'en-GB',{
-    year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'
-  }).format(new Date());
-}
-
-function getReportModel(){
-  if(!LAST_ASSESSMENT)return null;
-  const l=reportLabels();
-  const data=LAST_ASSESSMENT;
-  const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));
-  const requested=Number(data.requested_loan_jod)||0;
-  const recommended=Number(data.recommended_loan_jod)||0;
-  const cost=Number(data.estimated_project_cost_jod)||0;
-  const ratio=Number(data.overfinancing_ratio)||0;
-  const gap=Math.max(0,requested-cost);
-  const riskClass=String(data.risk_class||'Low').toLowerCase();
-  const riskColor=riskClass==='high'?'B54141':riskClass==='medium'?'B88922':'1E7B3C';
-  const period=Number(currentFieldValue('periodYears'))||0;
-  return {
-    l,
-    lang:LANG,
-    dir:LANG==='ar'?'rtl':'ltr',
-    generatedAt:reportDate(),
-    riskClass,
-    riskColor,
-    score:score.toFixed(1).replace('.0',''),
-    riskLabel:data.risk_class_label||data.risk_class||'—',
-    applicationRows:[
-      [l.governorate,currentFieldValue('governorate')||'—'],
-      [l.project,currentFieldValue('projectType')||'—'],
-      [l.activity,currentFieldValue('cropActivity')||'—'],
-      [l.irrigation,currentFieldValue('irrigationType')||'—'],
-      [l.water,currentFieldValue('waterAvailability')||'—'],
-      [l.area,currentFieldValue('farmArea')||'—'],
-      [l.years,period?`${period} ${l.yearUnit}`:'—'],
-      [l.firstTime,currentFieldValue('firstTime')||'—'],
-      [l.method,currentFieldValue('financingMethod')||'—']
-    ],
-    summaryRows:[
-      [l.score,`${score.toFixed(1).replace('.0','')} / 100`],
-      [l.risk,data.risk_class_label||data.risk_class||'—'],
-      [l.recommended,money(recommended)],
-      [l.requested,money(requested)],
-      [l.cost,money(cost)],
-      [l.ratio,`${ratio.toFixed(2).replace(/\.?0+$/,'')}×`]
-    ],
-    logicRows:[
-      [l.unitCost,money(data.cost_per_unit_jod)],
-      [l.cost,money(cost)],
-      [l.requested,money(requested)],
-      [l.gap,money(gap)]
-    ],
-    repayment:data.repayment_plan||'—',
-    reasons:(data.risk_reasons||[]).map(item=>({
-      text:String(item.text||''),
-      level:String(item.level||'')
-    })).filter(item=>item.text)
-  };
-}
-
-function reportTableHtml(rows){
-  return `<table class="report-table"><tbody>${rows.map(([label,value])=>
-    `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`
-  ).join('')}</tbody></table>`;
-}
-
-function buildPrintableReportHtml(model){
-  const reasonHtml=model.reasons.map(item=>{
-    const tone=item.level==='risk'?'risk':item.level==='good'?'good':item.level==='mid'?'mid':'neutral';
-    return `<li class="${tone}">${escapeHtml(item.text)}</li>`;
-  }).join('');
-  const title=reportFileName('').replace(/\.$/,'');
-  return `<!DOCTYPE html>
-<html lang="${model.lang}" dir="${model.dir}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title>
-<style>
-@page{size:A4;margin:12mm}
-*{box-sizing:border-box}
-html,body{margin:0;background:#fff;color:#1f2a1f;font-family:Arial,Tahoma,sans-serif}
-body{direction:${model.dir};-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.report{width:100%;max-width:190mm;margin:0 auto}
-.report-header{background:#0a3a1e;color:#fff;border-radius:10px 10px 0 0;padding:18px 20px;border-bottom:5px solid #c8a24b}
-.report-brand{font-size:12px;font-weight:700;color:#e0be6a;letter-spacing:.5px}
-.report-header h1{font-size:24px;margin:7px 0 6px}.report-header p{margin:0;font-size:11px;opacity:.88}
-.generated{padding:9px 2px 13px;color:#5a6b5a;font-size:10px;border-bottom:1px solid #dde7da}
-.section{margin-top:14px;break-inside:avoid}.section h2{font-size:15px;margin:0 0 8px;color:#0a3a1e;border-inline-start:4px solid #c8a24b;padding-inline-start:9px}
-.report-table{width:100%;border-collapse:collapse;table-layout:fixed;border:1px solid #dde7da;border-radius:8px;overflow:hidden}
-.report-table th,.report-table td{padding:9px 11px;border-bottom:1px solid #dde7da;font-size:11px;text-align:${model.dir==='rtl'?'right':'left'};vertical-align:top}
-.report-table tr:last-child th,.report-table tr:last-child td{border-bottom:0}.report-table th{width:42%;background:#f3f7f1;color:#5a6b5a;font-weight:700}.report-table td{font-weight:700}
-.score-card{display:grid;grid-template-columns:140px 1fr;gap:14px;border:1px solid #dde7da;border-radius:10px;padding:14px;background:#fbfdf9;align-items:center}
-.score-box{text-align:center;border-inline-end:1px solid #dde7da;padding-inline-end:14px}.score-number{font-size:38px;font-weight:900;color:#${model.riskColor};line-height:1}.score-out{font-size:10px;color:#5a6b5a;margin-top:4px}.risk-pill{display:inline-block;background:#${model.riskColor};color:#fff;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;margin-bottom:8px}.loan-big{font-size:22px;font-weight:900;color:#0f6b33;margin:3px 0 6px}.summary-text{font-size:11px;color:#5a6b5a;line-height:1.7}
-.repayment{border:1px solid #cfe2cd;background:#edf6eb;border-radius:9px;padding:12px 14px;font-size:12px}.repayment b{display:block;color:#5a6b5a;font-size:10px;margin-bottom:5px}.repayment strong{font-size:16px;color:#0a3a1e}
-.reasons{list-style:none;margin:0;padding:0;display:grid;gap:7px}.reasons li{border:1px solid #dde7da;border-inline-start:4px solid #4f82ad;background:#fbfdf9;border-radius:7px;padding:8px 10px;font-size:11px;line-height:1.6;break-inside:avoid}.reasons li.good{border-inline-start-color:#1e7b3c}.reasons li.mid{border-inline-start-color:#b88922}.reasons li.risk{border-inline-start-color:#b54141}
-.footer-note{margin-top:16px;border-top:1px solid #dde7da;padding-top:9px;color:#6b776a;font-size:9px;line-height:1.5}
-@media print{body{background:#fff}.report{max-width:none}.section{break-inside:avoid}.report-table tr,.reasons li{break-inside:avoid}}
-</style>
-</head>
-<body>
-<article class="report">
-  <header class="report-header">
-    <div class="report-brand">AGRIFIN AI</div>
-    <h1>${escapeHtml(model.l.title)}</h1>
-    <p>${escapeHtml(model.l.subtitle)}</p>
-  </header>
-  <div class="generated">${escapeHtml(model.l.generated)}: ${escapeHtml(model.generatedAt)}</div>
-
-  <section class="section">
-    <h2>${escapeHtml(model.l.summary)}</h2>
-    <div class="score-card">
-      <div class="score-box"><div class="score-number">${escapeHtml(model.score)}</div><div class="score-out">/ 100</div></div>
-      <div><span class="risk-pill">${escapeHtml(model.riskLabel)}</span><div class="loan-big">${escapeHtml(model.summaryRows[2][1])}</div><div class="summary-text">${escapeHtml(model.l.recommended)} · ${escapeHtml(model.l.risk)}: ${escapeHtml(model.riskLabel)}</div></div>
-    </div>
-    <div style="height:8px"></div>
-    ${reportTableHtml(model.summaryRows)}
-  </section>
-
-  <section class="section"><h2>${escapeHtml(model.l.application)}</h2>${reportTableHtml(model.applicationRows)}</section>
-  <section class="section"><h2>${escapeHtml(model.l.logic)}</h2>${reportTableHtml(model.logicRows)}</section>
-  <section class="section"><h2>${escapeHtml(model.l.repayment)}</h2><div class="repayment"><b>${escapeHtml(model.l.repayment)}</b><strong>${escapeHtml(model.repayment)}</strong></div></section>
-  <section class="section"><h2>${escapeHtml(model.l.reasons)}</h2><ul class="reasons">${reasonHtml||'<li>—</li>'}</ul></section>
-  <div class="footer-note">${escapeHtml(model.l.disclaimer)}</div>
-</article>
-<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),350));window.onafterprint=()=>window.close();<\/script>
-</body>
-</html>`;
-}
-
-function exportReportPdf(){
-  const model=getReportModel();
-  if(!model){alert(tr('exportNoResult'));return}
-
-  const button=$('exportPdfBtn');
-  const label=$('exportPdfText');
-  const original=label.textContent;
-
-  try{
-    button.disabled=true;
-    label.textContent=tr('exportPdfWorking');
-
-    const oldFrame=document.getElementById('agrifinPrintFrame');
-    if(oldFrame)oldFrame.remove();
-
-    const frame=document.createElement('iframe');
-    frame.id='agrifinPrintFrame';
-    frame.setAttribute('aria-hidden','true');
-    frame.style.position='fixed';
-    frame.style.width='1px';
-    frame.style.height='1px';
-    frame.style.inset='0 auto auto 0';
-    frame.style.border='0';
-    frame.style.opacity='0';
-    frame.style.pointerEvents='none';
-    document.body.appendChild(frame);
-
-    const frameDocument=frame.contentDocument||frame.contentWindow.document;
-    frameDocument.open();
-    frameDocument.write(buildPrintableReportHtml(model).replace(
-      /<script>window\.addEventListener\('load',[\s\S]*?<\/script>/,
-      ''
-    ));
-    frameDocument.close();
-
-    const printReport=()=>{
-      try{
-        frame.contentWindow.focus();
-        frame.contentWindow.print();
-      }catch(error){
-        console.error('PDF export error:',error);
-        alert(tr('exportError'));
-      }finally{
-        button.disabled=false;
-        label.textContent=original;
-        setTimeout(()=>frame.remove(),1500);
-      }
-    };
-
-    if(frameDocument.readyState==='complete')setTimeout(printReport,250);
-    else frame.onload=()=>setTimeout(printReport,250);
-  }catch(error){
-    console.error('PDF export error:',error);
-    button.disabled=false;
-    label.textContent=original;
-    alert(tr('exportError'));
-  }
-}
-
-function escapeXml(value){
-  return String(value??'')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&apos;');
-}
-
-function wordRunXml(text,{bold=false,size=22,color='1F2A1F',rtl=false}={}){
-  return `<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${bold?'<w:b/>':''}${rtl?'<w:rtl/>':''}<w:color w:val="${color}"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/></w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`;
-}
-
-function wordParagraphXml(text,{bold=false,size=22,color='1F2A1F',align='left',rtl=false,before=0,after=100,shading='',borderColor=''}={}){
-  const bidi=rtl?'<w:bidi/>':'';
-  const shade=shading?`<w:shd w:val="clear" w:color="auto" w:fill="${shading}"/>`:'';
-  const border=borderColor?`<w:pBdr>${rtl?`<w:right w:val="single" w:sz="12" w:space="5" w:color="${borderColor}"/>`:`<w:left w:val="single" w:sz="12" w:space="5" w:color="${borderColor}"/>`}</w:pBdr>`:'';
-  return `<w:p><w:pPr>${bidi}<w:jc w:val="${align}"/><w:spacing w:before="${before}" w:after="${after}"/>${shade}${border}</w:pPr>${wordRunXml(text,{bold,size,color,rtl})}</w:p>`;
-}
-
-function wordCellXml(text,{fill='FFFFFF',bold=false,color='1F2A1F',rtl=false,width=5000}={}){
-  const align=rtl?'right':'left';
-  return `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fill}"/><w:tcMar><w:top w:w="100" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="100" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraphXml(text,{bold,size:20,color,align,rtl,after:0})}</w:tc>`;
-}
-
-function wordTableXml(rows,{rtl=false}={}){
-  const tableRows=rows.map(([label,value])=>`<w:tr>${wordCellXml(label,{fill:'F3F7F1',bold:true,color:'5A6B5A',rtl,width:4200})}${wordCellXml(value,{fill:'FFFFFF',bold:true,color:'1F2A1F',rtl,width:5800})}</w:tr>`).join('');
-  return `<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="DDE7DA"/><w:left w:val="single" w:sz="4" w:color="DDE7DA"/><w:bottom w:val="single" w:sz="4" w:color="DDE7DA"/><w:right w:val="single" w:sz="4" w:color="DDE7DA"/><w:insideH w:val="single" w:sz="4" w:color="DDE7DA"/><w:insideV w:val="single" w:sz="4" w:color="DDE7DA"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="4200"/><w:gridCol w:w="5800"/></w:tblGrid>${tableRows}</w:tbl>`;
-}
-
-function wordSectionTitleXml(text,{rtl=false}={}){
-  return wordParagraphXml(text,{bold:true,size:28,color:'0A3A1E',align:rtl?'right':'left',rtl,before:240,after:100,borderColor:'C8A24B'});
-}
-
-function buildWordDocumentXml(model){
-  const rtl=model.dir==='rtl';
-  const align=rtl?'right':'left';
-  const reasons=(model.reasons.length?model.reasons:[{text:'—',level:''}]).map(item=>{
-    const color=item.level==='risk'?'B54141':item.level==='good'?'1E7B3C':item.level==='mid'?'B88922':'4F82AD';
-    return wordParagraphXml(`• ${item.text}`,{size:20,color:'1F2A1F',align,rtl,after:95,shading:'FBFDF9',borderColor:color});
-  }).join('');
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:xml="http://www.w3.org/XML/1998/namespace"><w:body>
-<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="10000"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="10000" w:type="dxa"/><w:shd w:val="clear" w:fill="0A3A1E"/><w:tcMar><w:top w:w="240" w:type="dxa"/><w:left w:w="260" w:type="dxa"/><w:bottom w:w="240" w:type="dxa"/><w:right w:w="260" w:type="dxa"/></w:tcMar></w:tcPr>
-${wordParagraphXml('AGRIFIN AI',{bold:true,size:21,color:'E0BE6A',align,rtl,after:55})}
-${wordParagraphXml(model.l.title,{bold:true,size:36,color:'FFFFFF',align,rtl,after:55})}
-${wordParagraphXml(model.l.subtitle,{size:20,color:'E8F0E6',align,rtl,after:0})}
-</w:tc></w:tr></w:tbl>
-${wordParagraphXml(`${model.l.generated}: ${model.generatedAt}`,{size:18,color:'5A6B5A',align,rtl,before:100,after:140})}
-${wordSectionTitleXml(model.l.summary,{rtl})}
-<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="DDE7DA"/><w:left w:val="single" w:sz="4" w:color="DDE7DA"/><w:bottom w:val="single" w:sz="4" w:color="DDE7DA"/><w:right w:val="single" w:sz="4" w:color="DDE7DA"/><w:insideV w:val="single" w:sz="4" w:color="DDE7DA"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="3200"/><w:gridCol w:w="6800"/></w:tblGrid><w:tr>
-<w:tc><w:tcPr><w:tcW w:w="3200" w:type="dxa"/><w:shd w:val="clear" w:fill="FBFDF9"/><w:vAlign w:val="center"/></w:tcPr>${wordParagraphXml(model.score,{bold:true,size:56,color:model.riskColor,align:'center',rtl,after:40})}${wordParagraphXml('/ 100',{size:18,color:'5A6B5A',align:'center',rtl,after:0})}</w:tc>
-<w:tc><w:tcPr><w:tcW w:w="6800" w:type="dxa"/><w:vAlign w:val="center"/><w:tcMar><w:top w:w="170" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:bottom w:w="170" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraphXml(model.riskLabel,{bold:true,size:23,color:model.riskColor,align,rtl,after:65})}${wordParagraphXml(model.summaryRows[2][1],{bold:true,size:34,color:'0F6B33',align,rtl,after:45})}${wordParagraphXml(`${model.l.recommended} · ${model.l.risk}: ${model.riskLabel}`,{size:18,color:'5A6B5A',align,rtl,after:0})}</w:tc>
-</w:tr></w:tbl>
-${wordParagraphXml('',{size:8,after:70})}
-${wordTableXml(model.summaryRows,{rtl})}
-${wordSectionTitleXml(model.l.application,{rtl})}
-${wordTableXml(model.applicationRows,{rtl})}
-${wordSectionTitleXml(model.l.logic,{rtl})}
-${wordTableXml(model.logicRows,{rtl})}
-${wordSectionTitleXml(model.l.repayment,{rtl})}
-<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="CFE2CD"/><w:left w:val="single" w:sz="4" w:color="CFE2CD"/><w:bottom w:val="single" w:sz="4" w:color="CFE2CD"/><w:right w:val="single" w:sz="4" w:color="CFE2CD"/></w:tblBorders></w:tblPr><w:tr><w:tc><w:tcPr><w:shd w:val="clear" w:fill="EDF6EB"/><w:tcMar><w:top w:w="150" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:bottom w:w="150" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraphXml(model.l.repayment,{bold:true,size:18,color:'5A6B5A',align,rtl,after:55})}${wordParagraphXml(model.repayment,{bold:true,size:28,color:'0A3A1E',align,rtl,after:0})}</w:tc></w:tr></w:tbl>
-${wordSectionTitleXml(model.l.reasons,{rtl})}
-${reasons}
-${wordParagraphXml(model.l.disclaimer,{size:16,color:'6B776A',align,rtl,before:200,after:0})}
-<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>
-</w:body></w:document>`;
-}
-
-function crc32(bytes){
-  if(!crc32.table){
-    crc32.table=Array.from({length:256},(_,n)=>{
-      let c=n;
-      for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
-      return c>>>0;
-    });
-  }
-  let crc=0xFFFFFFFF;
-  for(const byte of bytes)crc=crc32.table[(crc^byte)&0xFF]^(crc>>>8);
-  return (crc^0xFFFFFFFF)>>>0;
-}
-
-function zipDosDateTime(date=new Date()){
-  const year=Math.max(1980,date.getFullYear());
-  const time=(date.getHours()<<11)|(date.getMinutes()<<5)|(date.getSeconds()>>1);
-  const day=((year-1980)<<9)|((date.getMonth()+1)<<5)|date.getDate();
-  return {time,day};
-}
-
-function concatBytes(parts){
-  const total=parts.reduce((sum,part)=>sum+part.length,0);
-  const output=new Uint8Array(total);
-  let offset=0;
-  for(const part of parts){output.set(part,offset);offset+=part.length;}
-  return output;
-}
-
-function createStoredZip(files){
-  const encoder=new TextEncoder();
-  const localParts=[];
-  const centralParts=[];
-  let offset=0;
-  const {time,day}=zipDosDateTime();
-
-  for(const file of files){
-    const nameBytes=encoder.encode(file.name);
-    const dataBytes=typeof file.data==='string'?encoder.encode(file.data):file.data;
-    const crc=crc32(dataBytes);
-
-    const local=new Uint8Array(30+nameBytes.length);
-    const lv=new DataView(local.buffer);
-    lv.setUint32(0,0x04034B50,true);
-    lv.setUint16(4,20,true);
-    lv.setUint16(6,0x0800,true);
-    lv.setUint16(8,0,true);
-    lv.setUint16(10,time,true);
-    lv.setUint16(12,day,true);
-    lv.setUint32(14,crc,true);
-    lv.setUint32(18,dataBytes.length,true);
-    lv.setUint32(22,dataBytes.length,true);
-    lv.setUint16(26,nameBytes.length,true);
-    lv.setUint16(28,0,true);
-    local.set(nameBytes,30);
-    localParts.push(local,dataBytes);
-
-    const central=new Uint8Array(46+nameBytes.length);
-    const cv=new DataView(central.buffer);
-    cv.setUint32(0,0x02014B50,true);
-    cv.setUint16(4,20,true);
-    cv.setUint16(6,20,true);
-    cv.setUint16(8,0x0800,true);
-    cv.setUint16(10,0,true);
-    cv.setUint16(12,time,true);
-    cv.setUint16(14,day,true);
-    cv.setUint32(16,crc,true);
-    cv.setUint32(20,dataBytes.length,true);
-    cv.setUint32(24,dataBytes.length,true);
-    cv.setUint16(28,nameBytes.length,true);
-    cv.setUint16(30,0,true);
-    cv.setUint16(32,0,true);
-    cv.setUint16(34,0,true);
-    cv.setUint16(36,0,true);
-    cv.setUint32(38,0,true);
-    cv.setUint32(42,offset,true);
-    central.set(nameBytes,46);
-    centralParts.push(central);
-
-    offset+=local.length+dataBytes.length;
-  }
-
-  const centralBytes=concatBytes(centralParts);
-  const end=new Uint8Array(22);
-  const ev=new DataView(end.buffer);
-  ev.setUint32(0,0x06054B50,true);
-  ev.setUint16(4,0,true);
-  ev.setUint16(6,0,true);
-  ev.setUint16(8,files.length,true);
-  ev.setUint16(10,files.length,true);
-  ev.setUint32(12,centralBytes.length,true);
-  ev.setUint32(16,offset,true);
-  ev.setUint16(20,0,true);
-
-  return concatBytes([...localParts,centralBytes,end]);
-}
-
-function buildDocxBlob(model){
-  const now=new Date().toISOString();
-  const files=[
-    {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`},
-    {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`},
-    {name:'word/document.xml',data:buildWordDocumentXml(model)},
-    {name:'word/styles.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`},
-    {name:'docProps/core.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${escapeXml(model.l.title)}</dc:title><dc:creator>AgriFin AI</dc:creator><cp:lastModifiedBy>AgriFin AI</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`},
-    {name:'docProps/app.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>AgriFin AI</Application><AppVersion>1.0</AppVersion></Properties>`}
-  ];
-  return new Blob([createStoredZip(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-}
-
-async function exportReportWord(){
-  const model=getReportModel();
-  if(!model){alert(tr('exportNoResult'));return}
-  const button=$('exportWordBtn');
-  const label=$('exportWordText');
-  const original=label.textContent;
-  try{
-    button.disabled=true;
-    label.textContent=tr('exportWordWorking');
-    const blob=buildDocxBlob(model);
-    const url=URL.createObjectURL(blob);
-    const link=document.createElement('a');
-    link.href=url;
-    link.download=reportFileName('docx');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),2000);
-  }catch(error){
-    console.error('Word export error:',error);
-    alert(tr('exportError'));
-  }finally{
-    button.disabled=false;
-    label.textContent=original;
-  }
-}
+function loadExample(){const values={governorate:'Irbid',gender:'ذكر',projectType:'Olives / Fruit Trees',cropActivity:'Olives',irrigationType:'Drip',waterAvailability:'High',farmArea:'10',periodYears:'5',requestedLoan:'1000',expectedRevenue:'4500',firstTime:'No',financingMethod:'فائدة'};Object.entries(values).forEach(([k,v])=>{$(k).value=v});$('formStatus').textContent=''}
 
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
 document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.l)));
-$('loanForm').addEventListener('submit',submitAssessment);$('exampleBtn').addEventListener('click',loadExample);
-const exportPdfButton=$('exportPdfBtn');
-const exportWordButton=$('exportWordBtn');
-if(exportPdfButton)exportPdfButton.addEventListener('click',exportReportPdf);
-if(exportWordButton)exportWordButton.addEventListener('click',exportReportWord);
+$('loanForm').addEventListener('submit',submitAssessment);$('exampleBtn').addEventListener('click',loadExample);$('pdfExportBtn').addEventListener('click',exportPdf);$('wordExportBtn').addEventListener('click',exportWord);
 const params=new URLSearchParams(location.search);THEME=params.get('theme')||localStorage.getItem(THEME_KEY)||'light';LANG=params.get('lang')||localStorage.getItem(LANG_KEY)||'en';
 populateSelects();setTheme(THEME,false);setLanguage(LANG,false);
 </script>
