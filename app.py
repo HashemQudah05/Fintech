@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import math
 import os
+import calendar
+from datetime import date
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List
+from xml.sax.saxutils import escape as xml_escape
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import joblib
 import numpy as np
@@ -162,6 +167,405 @@ REPAYMENT_LABELS = {
 }
 
 
+# The model keeps the original categorical repayment feature for compatibility.
+# The functions below build a richer prototype repayment recommendation for display/export.
+def add_months(start: date, months: int) -> date:
+    month_index = start.month - 1 + months
+    year = start.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(start.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def next_fixed_date(start: date, month: int, day: int) -> date:
+    resolved_day = min(day, calendar.monthrange(start.year, month)[1])
+    candidate = date(start.year, month, resolved_day)
+    if candidate <= start:
+        resolved_day = min(day, calendar.monthrange(start.year + 1, month)[1])
+        candidate = date(start.year + 1, month, resolved_day)
+    return candidate
+
+
+def format_date(value: date) -> str:
+    return value.strftime("%d/%m/%Y")
+
+
+def build_repayment_schedule(
+    payload: Dict[str, Any],
+    application: Dict[str, Any],
+    recommended_loan: float,
+    lang: str,
+) -> Dict[str, Any]:
+    project_type = str(payload.get("projectType", ""))
+    crop = str(payload.get("cropActivity", ""))
+    years = max(to_float(payload.get("periodYears"), 5), 0.5)
+    today = date.today()
+
+    plan_code = "annual"
+    grace_years = 0
+    season_month = None
+    season_day = None
+
+    if project_type == "Livestock":
+        plan_code = "monthly"
+    elif crop == "Citrus":
+        plan_code = "annual_grace"
+        grace_years = min(3, max(0, int(math.ceil(years)) - 1))
+    elif crop == "Wheat Barley" or project_type == "Field Crops":
+        plan_code = "seasonal_annual"
+        season_month, season_day = 8, 31
+    elif crop == "Olives":
+        plan_code = "seasonal_annual"
+        season_month, season_day = 11, 30
+    elif project_type == "Open Field Vegetables":
+        plan_code = "seasonal_annual"
+        season_month, season_day = 5, 31
+
+    labels = {
+        "monthly": {
+            "plan_en": "Monthly repayment",
+            "plan_ar": "سداد شهري",
+            "frequency_en": "Monthly",
+            "frequency_ar": "شهري",
+            "basis_en": "The project is expected to generate recurring income during the year.",
+            "basis_ar": "من المتوقع أن يحقق المشروع دخلاً متكرراً خلال السنة.",
+        },
+        "seasonal_annual": {
+            "plan_en": "Seasonal annual repayment",
+            "plan_ar": "سداد سنوي موسمي",
+            "frequency_en": "Annual — aligned with the production season",
+            "frequency_ar": "سنوي — مرتبط بموسم الإنتاج",
+            "basis_en": "The installment is aligned with the expected harvest or operating season.",
+            "basis_ar": "تمت مواءمة القسط مع موسم الحصاد أو التشغيل المتوقع.",
+        },
+        "annual_grace": {
+            "plan_en": "Annual repayment after a grace period",
+            "plan_ar": "سداد سنوي بعد فترة سماح",
+            "frequency_en": "Annual after grace period",
+            "frequency_ar": "سنوي بعد فترة السماح",
+            "basis_en": "The activity needs time before reaching productive cash flow.",
+            "basis_ar": "يحتاج النشاط إلى وقت قبل الوصول إلى تدفقات نقدية إنتاجية.",
+        },
+        "annual": {
+            "plan_en": "Annual repayment",
+            "plan_ar": "سداد سنوي",
+            "frequency_en": "Annual",
+            "frequency_ar": "سنوي",
+            "basis_en": "A conservative annual prototype plan is proposed for officer review.",
+            "basis_ar": "تم اقتراح خطة سنوية افتراضية محافظة لمراجعة موظف الإقراض.",
+        },
+    }
+    meta = labels[plan_code]
+
+    schedule: List[Dict[str, Any]] = []
+    loan_amount = max(float(recommended_loan), 0.0)
+
+    if plan_code == "monthly":
+        installment_count = max(1, int(round(years * 12)))
+        first_due = add_months(today, 1)
+        payment_dates = [add_months(first_due, i) for i in range(installment_count)]
+    elif plan_code == "annual_grace":
+        total_years = max(1, int(math.ceil(years)))
+        installment_count = max(1, total_years - grace_years)
+        for year_no in range(1, grace_years + 1):
+            schedule.append({
+                "installment_no": "—",
+                "due_date": format_date(add_months(today, 12 * year_no)),
+                "type_en": f"Grace period — year {year_no}",
+                "type_ar": f"فترة سماح — السنة {year_no}",
+                "amount_jod": 0.0,
+                "balance_after_jod": round(loan_amount, 2),
+            })
+        first_due = add_months(today, 12 * (grace_years + 1))
+        payment_dates = [add_months(first_due, 12 * i) for i in range(installment_count)]
+    else:
+        installment_count = max(1, int(math.ceil(years)))
+        if plan_code == "seasonal_annual" and season_month and season_day:
+            first_due = next_fixed_date(today, season_month, season_day)
+        else:
+            first_due = add_months(today, 12)
+        payment_dates = [add_months(first_due, 12 * i) for i in range(installment_count)]
+
+    base_installment = round(loan_amount / installment_count, 2) if installment_count else 0.0
+    paid = 0.0
+    for index, due in enumerate(payment_dates, start=1):
+        amount = base_installment
+        if index == installment_count:
+            amount = round(loan_amount - paid, 2)
+        paid = round(paid + amount, 2)
+        balance = max(round(loan_amount - paid, 2), 0.0)
+        schedule.append({
+            "installment_no": index,
+            "due_date": format_date(due),
+            "type_en": "Estimated principal installment",
+            "type_ar": "قسط أصل تقديري",
+            "amount_jod": amount,
+            "balance_after_jod": balance,
+        })
+
+    first_payment_date = format_date(payment_dates[0]) if payment_dates else "—"
+    note_en = "Prototype schedule based on principal only. Final dates and amounts depend on ACC approval, interest or Murabaha terms, and the signed debt instrument."
+    note_ar = "خطة افتراضية لأصل القرض فقط. تعتمد المواعيد والقيم النهائية على موافقة المؤسسة وشروط الفائدة أو المرابحة وسند الدين الموقع."
+
+    return {
+        "plan_code": plan_code,
+        "plan_type": meta["plan_ar"] if lang == "ar" else meta["plan_en"],
+        "plan_type_en": meta["plan_en"],
+        "plan_type_ar": meta["plan_ar"],
+        "frequency": meta["frequency_ar"] if lang == "ar" else meta["frequency_en"],
+        "frequency_en": meta["frequency_en"],
+        "frequency_ar": meta["frequency_ar"],
+        "basis": meta["basis_ar"] if lang == "ar" else meta["basis_en"],
+        "basis_en": meta["basis_en"],
+        "basis_ar": meta["basis_ar"],
+        "loan_term_years": years,
+        "grace_period_years": grace_years,
+        "number_of_installments": installment_count,
+        "first_payment_date": first_payment_date,
+        "estimated_installment_jod": base_installment,
+        "note": note_ar if lang == "ar" else note_en,
+        "note_en": note_en,
+        "note_ar": note_ar,
+        "schedule": schedule,
+    }
+
+
+def _word_run(text: Any, *, bold: bool = False, size: int = 22, rtl: bool = False) -> str:
+    safe = xml_escape(str(text))
+    props = [f'<w:sz w:val="{size}"/>', f'<w:szCs w:val="{size}"/>', '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>']
+    if bold:
+        props.append('<w:b/>')
+    if rtl:
+        props.append('<w:rtl/>')
+    return f'<w:r><w:rPr>{"".join(props)}</w:rPr><w:t xml:space="preserve">{safe}</w:t></w:r>'
+
+
+def _word_paragraph(text: Any, *, bold: bool = False, size: int = 22, rtl: bool = False, align: str | None = None) -> str:
+    alignment = align or ("right" if rtl else "left")
+    p_props = [f'<w:jc w:val="{alignment}"/>', '<w:spacing w:after="100"/>']
+    if rtl:
+        p_props.append('<w:bidi/>')
+    return f'<w:p><w:pPr>{"".join(p_props)}</w:pPr>{_word_run(text, bold=bold, size=size, rtl=rtl)}</w:p>'
+
+
+def _word_cell(text: Any, *, bold: bool = False, rtl: bool = False) -> str:
+    shade = '<w:shd w:val="clear" w:fill="E7F1E8"/>' if bold else ''
+    return (
+        '<w:tc><w:tcPr><w:tcW w:w="2400" w:type="dxa"/>' + shade + '</w:tcPr>'
+        + _word_paragraph(text, bold=bold, size=19, rtl=rtl)
+        + '</w:tc>'
+    )
+
+
+def _word_table(rows: List[List[Any]], *, rtl: bool = False, header: bool = False) -> str:
+    borders = (
+        '<w:tblBorders>'
+        '<w:top w:val="single" w:sz="4" w:color="AAB7AA"/>'
+        '<w:left w:val="single" w:sz="4" w:color="AAB7AA"/>'
+        '<w:bottom w:val="single" w:sz="4" w:color="AAB7AA"/>'
+        '<w:right w:val="single" w:sz="4" w:color="AAB7AA"/>'
+        '<w:insideH w:val="single" w:sz="4" w:color="D5DED5"/>'
+        '<w:insideV w:val="single" w:sz="4" w:color="D5DED5"/>'
+        '</w:tblBorders>'
+    )
+    table_rows = []
+    for row_index, row in enumerate(rows):
+        cells = ''.join(_word_cell(value, bold=header and row_index == 0, rtl=rtl) for value in row)
+        table_rows.append(f'<w:tr>{cells}</w:tr>')
+    bidi_visual = '<w:bidiVisual/>' if rtl else ''
+    return f'<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/>{bidi_visual}{borders}</w:tblPr>{"".join(table_rows)}</w:tbl>'
+
+
+def build_word_report(payload: Dict[str, Any], result: Dict[str, Any]) -> bytes:
+    lang = "ar" if payload.get("lang") == "ar" else "en"
+    rtl = lang == "ar"
+    app_summary = result.get("application_summary", {})
+    plan = result.get("repayment_schedule", {})
+
+    if rtl:
+        labels = {
+            "title": "تقرير تقييم طلب التمويل الزراعي",
+            "generated": "تاريخ إنشاء التقرير",
+            "application": "ملخص الطلب",
+            "result": "نتيجة دعم القرار",
+            "repayment": "خطة السداد المقترحة",
+            "reasons": "أسباب النتيجة",
+            "field": "البيان",
+            "value": "القيمة",
+            "governorate": "المحافظة",
+            "project": "نوع المشروع",
+            "activity": "المحصول أو النشاط",
+            "period": "فترة السداد",
+            "requested": "القرض المطلوب",
+            "revenue": "الإيراد السنوي المتوقع",
+            "risk": "درجة وتصنيف المخاطر",
+            "recommended": "القرض المقترح",
+            "eligible": "التمويل المؤهل",
+            "cost": "تكلفة المشروع المقدرة",
+            "route": "مسار الموافقة",
+            "plan": "نوع الخطة",
+            "frequency": "دورية السداد",
+            "grace": "فترة السماح",
+            "count": "عدد الأقساط",
+            "first": "أول استحقاق",
+            "installment": "القسط التقديري",
+            "basis": "أساس الاقتراح",
+            "no": "القسط",
+            "due": "تاريخ الاستحقاق",
+            "type": "النوع",
+            "amount": "القيمة التقديرية",
+            "balance": "الرصيد المتبقي",
+            "years": "سنة",
+        }
+    else:
+        labels = {
+            "title": "Agricultural Loan Assessment Report",
+            "generated": "Report generated",
+            "application": "Application Summary",
+            "result": "Decision Support Result",
+            "repayment": "Proposed Repayment Plan",
+            "reasons": "Why this result?",
+            "field": "Field",
+            "value": "Value",
+            "governorate": "Governorate",
+            "project": "Project type",
+            "activity": "Crop or activity",
+            "period": "Repayment period",
+            "requested": "Requested loan",
+            "revenue": "Expected annual revenue",
+            "risk": "Risk score and class",
+            "recommended": "Recommended loan",
+            "eligible": "Maximum eligible financing",
+            "cost": "Estimated project cost",
+            "route": "Approval route",
+            "plan": "Plan type",
+            "frequency": "Frequency",
+            "grace": "Grace period",
+            "count": "Number of installments",
+            "first": "First payment date",
+            "installment": "Estimated installment",
+            "basis": "Recommendation basis",
+            "no": "No.",
+            "due": "Due date",
+            "type": "Type",
+            "amount": "Estimated amount",
+            "balance": "Remaining balance",
+            "years": "years",
+        }
+
+    def money_report(value: Any) -> str:
+        return f"{float(value or 0):,.2f} JOD"
+
+    application_rows = [
+        [labels["field"], labels["value"]],
+        [labels["governorate"], app_summary.get("governorate", "—")],
+        [labels["project"], app_summary.get("project_type", "—")],
+        [labels["activity"], app_summary.get("crop_or_activity", "—")],
+        [labels["period"], f'{app_summary.get("repayment_period_years", "—")} {labels["years"]}'],
+        [labels["requested"], money_report(result.get("requested_loan_jod"))],
+        [labels["revenue"], money_report(result.get("expected_annual_revenue_jod"))],
+    ]
+    decision_rows = [
+        [labels["field"], labels["value"]],
+        [labels["risk"], f'{result.get("risk_score", 0)}/100 — {result.get("risk_class_label", result.get("risk_class", ""))}'],
+        [labels["recommended"], money_report(result.get("recommended_loan_jod"))],
+        [labels["eligible"], money_report(result.get("max_eligible_financing_jod"))],
+        [labels["cost"], money_report(result.get("estimated_project_cost_jod"))],
+        [labels["route"], result.get("approval_route", "—")],
+    ]
+    repayment_rows = [
+        [labels["field"], labels["value"]],
+        [labels["plan"], plan.get("plan_type_ar" if rtl else "plan_type_en", plan.get("plan_type", "—"))],
+        [labels["frequency"], plan.get("frequency_ar" if rtl else "frequency_en", plan.get("frequency", "—"))],
+        [labels["grace"], f'{plan.get("grace_period_years", 0)} {labels["years"]}'],
+        [labels["count"], plan.get("number_of_installments", "—")],
+        [labels["first"], plan.get("first_payment_date", "—")],
+        [labels["installment"], money_report(plan.get("estimated_installment_jod"))],
+        [labels["basis"], plan.get("basis_ar" if rtl else "basis_en", plan.get("basis", "—"))],
+    ]
+    schedule_rows: List[List[Any]] = [[labels["no"], labels["due"], labels["type"], labels["amount"], labels["balance"]]]
+    for row in plan.get("schedule", []):
+        schedule_rows.append([
+            row.get("installment_no", "—"),
+            row.get("due_date", "—"),
+            row.get("type_ar" if rtl else "type_en", "—"),
+            money_report(row.get("amount_jod")),
+            money_report(row.get("balance_after_jod")),
+        ])
+
+    blocks = [
+        _word_paragraph(labels["title"], bold=True, size=34, rtl=rtl, align="center"),
+        _word_paragraph(f'{labels["generated"]}: {format_date(date.today())}', size=18, rtl=rtl, align="center"),
+        _word_paragraph(labels["application"], bold=True, size=27, rtl=rtl),
+        _word_table(application_rows, rtl=rtl, header=True),
+        _word_paragraph(labels["result"], bold=True, size=27, rtl=rtl),
+        _word_table(decision_rows, rtl=rtl, header=True),
+        _word_paragraph(labels["repayment"], bold=True, size=27, rtl=rtl),
+        _word_table(repayment_rows, rtl=rtl, header=True),
+        _word_paragraph(labels["repayment"], bold=True, size=24, rtl=rtl),
+        _word_table(schedule_rows, rtl=rtl, header=True),
+        _word_paragraph(plan.get("note_ar" if rtl else "note_en", plan.get("note", "")), size=18, rtl=rtl),
+        _word_paragraph(labels["reasons"], bold=True, size=27, rtl=rtl),
+    ]
+    for reason in result.get("risk_reasons", []):
+        blocks.append(_word_paragraph(f'• {reason.get("text", "")}', size=19, rtl=rtl))
+
+    document_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>{''.join(blocks)}
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="850" w:right="850" w:bottom="850" w:left="850" w:header="400" w:footer="400" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>'''
+
+    content_types = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>'''
+    root_rels = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>'''
+    doc_rels = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>'''
+    styles_xml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:style w:type="paragraph" w:default="1" w:styleId="Normal">
+    <w:name w:val="Normal"/><w:qFormat/>
+    <w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>
+  </w:style>
+</w:styles>'''
+    core_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:title>AgriFin AI Report</dc:title><dc:creator>AgriFin AI</dc:creator><cp:lastModifiedBy>AgriFin AI</cp:lastModifiedBy>
+  <dcterms:created xsi:type="dcterms:W3CDTF">{date.today().isoformat()}T00:00:00Z</dcterms:created>
+</cp:coreProperties>'''
+    app_xml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>AgriFin AI</Application></Properties>'''
+
+    output = BytesIO()
+    with ZipFile(output, "w", ZIP_DEFLATED) as docx:
+        docx.writestr("[Content_Types].xml", content_types)
+        docx.writestr("_rels/.rels", root_rels)
+        docx.writestr("word/document.xml", document_xml)
+        docx.writestr("word/styles.xml", styles_xml)
+        docx.writestr("word/_rels/document.xml.rels", doc_rels)
+        docx.writestr("docProps/core.xml", core_xml)
+        docx.writestr("docProps/app.xml", app_xml)
+    return output.getvalue()
+
+
 def to_float(value: Any, default: float = 0.0) -> float:
     try:
         if value is None or value == "":
@@ -221,9 +625,7 @@ def add_engineered_features(data: pd.DataFrame) -> pd.DataFrame:
     X = data.copy()
     eps = 1e-6
     X["loan_to_cost_ratio"] = X["requested_loan_jod"] / (X["estimated_project_cost_jod"] + eps)
-    # Legacy feature name retained temporarily for compatibility with the current model bundle.
-    # Its value now represents estimated project cost relative to the requested loan.
-    X["eligible_to_requested_ratio"] = X["estimated_project_cost_jod"] / (X["requested_loan_jod"] + eps)
+    X["eligible_to_requested_ratio"] = X["max_eligible_financing_jod"] / (X["requested_loan_jod"] + eps)
     X["revenue_to_requested_ratio"] = X["expected_annual_revenue_jod"] / (X["requested_loan_jod"] + eps)
     X["revenue_to_cost_ratio"] = X["expected_annual_revenue_jod"] / (X["estimated_project_cost_jod"] + eps)
     X["area_to_loan_ratio"] = X["farm_area_dunum"] / (X["requested_loan_jod"] + eps)
@@ -242,13 +644,10 @@ def add_engineered_features(data: pd.DataFrame) -> pd.DataFrame:
     return X
 
 
-def rule_based_recommendation(
-    row: pd.Series,
-    risk_score: float
-) -> float:
+def rule_based_recommendation(row: pd.Series, risk_score: float) -> float:
     requested = float(row["requested_loan_jod"])
-    project_cost = float(row["estimated_project_cost_jod"])
-    base = min(requested, project_cost)
+    max_eligible = float(row["max_eligible_financing_jod"])
+    base = min(requested, max_eligible)
 
     if risk_score < 40:
         adjustment = 1.00
@@ -258,9 +657,8 @@ def rule_based_recommendation(
         adjustment = 0.70
 
     rec = base * adjustment
-    rec = min(rec, requested, project_cost)
+    rec = min(rec, requested, max_eligible)
     rec = max(rec, 0)
-
     return safe_round_50(rec)
 
 
@@ -286,12 +684,9 @@ def build_application(payload: Dict[str, Any]) -> Dict[str, Any]:
     estimated_units = max(area, 0)
     unit_type = "رأس" if crop_en == "Sheep Goats" else "دونم"
     estimated_project_cost = max(0.0, unit_cost * estimated_units)
-    over_ratio = requested / max(estimated_project_cost, 1)
-    over_flag = (
-        "Yes"
-        if requested > estimated_project_cost and estimated_project_cost > 0
-        else "No"
-    )
+    max_eligible = estimated_project_cost * 0.75
+    over_ratio = requested / max(max_eligible, 1)
+    over_flag = "Yes" if requested > max_eligible and max_eligible > 0 else "No"
 
     repayment_freq = repayment_frequency(project_type_en, years, requested)
     authority = approval_authority(requested)
@@ -316,9 +711,7 @@ def build_application(payload: Dict[str, Any]) -> Dict[str, Any]:
         "unit_type": unit_type,
         "cost_per_unit_jod": unit_cost,
         "estimated_project_cost_jod": estimated_project_cost,
-        # Legacy field retained temporarily for compatibility with the current model bundle.
-        # No 75% financing calculation is applied.
-        "max_eligible_financing_jod": estimated_project_cost,
+        "max_eligible_financing_jod": max_eligible,
         "requested_loan_jod": requested,
         "expected_annual_revenue_jod": revenue,
         "financing_method": payload.get("financingMethod", "فائدة"),
@@ -371,20 +764,11 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
             reasons.append({"level": "good", "text": "الزراعة المحمية تقلل جزءًا من التعرض للمخاطر المناخية."})
 
         if over_ratio > 1.15:
-            reasons.append({
-                "level": "risk",
-                "text": "قيمة القرض المطلوبة أعلى من تكلفة المشروع المقدرة."
-            })
+            reasons.append({"level": "risk", "text": "قيمة القرض المطلوبة أعلى من حد التمويل المؤهل حسب التكلفة المقدرة."})
         elif over_ratio > 0.90:
-            reasons.append({
-                "level": "mid",
-                "text": "قيمة القرض المطلوبة قريبة من كامل تكلفة المشروع المقدرة."
-            })
+            reasons.append({"level": "mid", "text": "قيمة القرض المطلوبة قريبة من الحد الأعلى للتمويل المؤهل."})
         else:
-            reasons.append({
-                "level": "good",
-                "text": "قيمة القرض المطلوبة ضمن تكلفة المشروع المقدرة."
-            })
+            reasons.append({"level": "good", "text": "قيمة القرض المطلوبة ضمن القدرة التمويلية المقدرة."})
 
         if rev_ratio < 1.0:
             reasons.append({"level": "risk", "text": "الإيراد السنوي المتوقع ضعيف مقارنة بقيمة القرض المطلوبة."})
@@ -425,20 +809,11 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
         reasons.append({"level": "good", "text": "Controlled/greenhouse production reduces some climate exposure."})
 
     if over_ratio > 1.15:
-        reasons.append({
-            "level": "risk",
-            "text": "The requested loan is higher than the estimated project cost."
-        })
+        reasons.append({"level": "risk", "text": "The requested loan is higher than the estimated eligible financing limit."})
     elif over_ratio > 0.90:
-        reasons.append({
-            "level": "mid",
-            "text": "The requested loan is close to the full estimated project cost."
-        })
+        reasons.append({"level": "mid", "text": "The requested loan is close to the maximum eligible financing amount."})
     else:
-        reasons.append({
-            "level": "good",
-            "text": "The requested loan is within the estimated project cost."
-        })
+        reasons.append({"level": "good", "text": "The requested loan is within the estimated financing capacity."})
 
     if rev_ratio < 1.0:
         reasons.append({"level": "risk", "text": "Expected revenue is weak compared with the requested loan."})
@@ -479,6 +854,7 @@ def predict_application(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     reasons = generate_risk_reasons(row, risk_score_pred, risk_class_final, recommended_final, lang)
     explanation = " ".join([r["text"] for r in reasons])
+    repayment_schedule = build_repayment_schedule(payload, application, recommended_final, lang)
 
     return {
         "risk_score": risk_score_clean,
@@ -486,13 +862,24 @@ def predict_application(payload: Dict[str, Any]) -> Dict[str, Any]:
         "risk_class_label": RISK_LABELS[lang][risk_class_final],
         "recommended_loan_jod": recommended_final,
         "estimated_project_cost_jod": float(row["estimated_project_cost_jod"]),
+        "max_eligible_financing_jod": float(row["max_eligible_financing_jod"]),
         "cost_per_unit_jod": float(row["cost_per_unit_jod"]),
         "requested_loan_jod": float(row["requested_loan_jod"]),
         "expected_annual_revenue_jod": float(row["expected_annual_revenue_jod"]),
         "overfinancing_ratio": round(float(row["overfinancing_ratio"]), 2),
         "over_financing_flag": application["over_financing_flag"],
         "approval_route": ROUTE_LABELS[lang].get(route_key, route_key),
-        "repayment_plan": REPAYMENT_LABELS[lang].get(repayment_key, repayment_key),
+        "repayment_plan": repayment_schedule["plan_type"],
+        "repayment_schedule": repayment_schedule,
+        "application_summary": {
+            "governorate": application["governorate"],
+            "branch": application["branch"],
+            "project_type": application["project_type"],
+            "crop_or_activity": application["crop_or_activity"],
+            "irrigation_type": application["irrigation_type"],
+            "repayment_period_years": application["repayment_period_years"],
+            "financing_method": application["financing_method"],
+        },
         "risk_reasons": reasons,
         "risk_explanation": explanation,
         "model_note": bundle.get("note", "Prototype model."),
@@ -515,6 +902,16 @@ class AgriFinHandler(BaseHTTPRequestHandler):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self._send_bytes(data, status=status, content_type="application/json; charset=utf-8")
 
+    def _send_download(self, data: bytes, content_type: str, filename: str) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         if path in ["/", "/index.html"]:
@@ -532,7 +929,7 @@ class AgriFinHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
-        if path != "/api/predict":
+        if path not in ["/api/predict", "/api/export/word"]:
             self._send_json({"error": "Not found"}, status=404)
             return
         try:
@@ -540,6 +937,15 @@ class AgriFinHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(length).decode("utf-8") if length else "{}"
             payload = json.loads(body or "{}")
             result = predict_application(payload)
+            if path == "/api/export/word":
+                document = build_word_report(payload, result)
+                filename = f"AgriFin-Risk-Report-{date.today().isoformat()}.docx"
+                self._send_download(
+                    document,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    filename,
+                )
+                return
             self._send_json(result)
         except Exception as exc:
             self._send_json({"error": str(exc)}, status=400)
