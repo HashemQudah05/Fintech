@@ -360,7 +360,6 @@ footer{max-width:1500px;margin:0 auto;padding:0 22px 24px;color:var(--ink-soft);
   <div class="chat-note" id="chatNote">Field and result explanations are available.</div>
 </aside>
 
-<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
 <script>
 const THEME_KEY='agrifin-theme';
 const LANG_KEY='agrifin-lang';
@@ -415,7 +414,13 @@ const T={
 function tr(key){return (T[key]&&T[key][LANG])||key}
 function fillSelect(id,items,selected){const el=$(id);el.innerHTML=items.map(x=>`<option value="${x[0]}" ${x[0]===selected?'selected':''}>${LANG==='ar'?x[2]:x[1]}</option>`).join('')}
 function updateDashboardLinks(){const q=new URLSearchParams({lang:LANG,theme:THEME}).toString();['dashboardLink','heroDashboardLink'].forEach(id=>{$(id).href='/dashboard?'+q;$(id).title=tr('dashboardTitle')})}
-function setTheme(theme,persist=true){THEME=['light','dark','cb'].includes(theme)?theme:'light';document.body.dataset.theme=THEME;
+function setTheme(theme,persist=true){
+  THEME=['light','dark','cb'].includes(theme)?theme:'light';
+  document.body.dataset.theme=THEME;
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active',b.dataset.t===THEME));
+  if(persist)localStorage.setItem(THEME_KEY,THEME);
+  updateDashboardLinks();
+}
 function chatText(en,ar){return LANG==='ar'?ar:en}
 function setChatOpen(open){
   const panel=$('chatPanel');
@@ -716,7 +721,6 @@ document.querySelectorAll('.chat-chip').forEach(button=>button.addEventListener(
 }));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('chatPanel').classList.contains('open'))setChatOpen(false)});
 
-document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active',b.dataset.t===THEME));if(persist)localStorage.setItem(THEME_KEY,THEME);updateDashboardLinks()}
 function setLanguage(lang,persist=true){LANG=lang==='ar'?'ar':'en';document.body.dir=LANG==='ar'?'rtl':'ltr';document.documentElement.lang=LANG;document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('active',b.dataset.l===LANG));if(persist)localStorage.setItem(LANG_KEY,LANG);applyTranslations();populateSelects();updateDashboardLinks();refreshChatLanguage()}
 function applyTranslations(){Object.keys(T).forEach(key=>{const el=$(key);if(el)el.textContent=tr(key)});$('dashboardLink').title=tr('dashboardTitle');$('heroDashboardLink').title=tr('dashboardTitle')}
 function populateSelects(){const current=id=>$(id).value;const keep={governorate:current('governorate'),projectType:current('projectType'),cropActivity:current('cropActivity'),irrigationType:current('irrigationType'),waterAvailability:current('waterAvailability'),firstTime:current('firstTime'),financingMethod:current('financingMethod')};fillSelect('governorate',DATA.governorates,keep.governorate||'Ajloun');fillSelect('projectType',DATA.projects,keep.projectType||'Olives / Fruit Trees');fillSelect('cropActivity',DATA.crops,keep.cropActivity||'Olives');fillSelect('irrigationType',DATA.irrigation,keep.irrigationType||'Drip');fillSelect('waterAvailability',DATA.water,keep.waterAvailability||'High');fillSelect('firstTime',DATA.yesNo,keep.firstTime||'No');fillSelect('financingMethod',DATA.financing,keep.financingMethod||'فائدة')}
@@ -936,41 +940,238 @@ body{direction:${model.dir};-webkit-print-color-adjust:exact;print-color-adjust:
 function exportReportPdf(){
   const model=getReportModel();
   if(!model){alert(tr('exportNoResult'));return}
-  const reportWindow=window.open('','_blank');
-  if(!reportWindow){alert(tr('exportError'));return}
-  reportWindow.document.open();
-  reportWindow.document.write(buildPrintableReportHtml(model));
-  reportWindow.document.close();
+
+  const button=$('exportPdfBtn');
+  const label=$('exportPdfText');
+  const original=label.textContent;
+
+  try{
+    button.disabled=true;
+    label.textContent=tr('exportPdfWorking');
+
+    const oldFrame=document.getElementById('agrifinPrintFrame');
+    if(oldFrame)oldFrame.remove();
+
+    const frame=document.createElement('iframe');
+    frame.id='agrifinPrintFrame';
+    frame.setAttribute('aria-hidden','true');
+    frame.style.position='fixed';
+    frame.style.width='1px';
+    frame.style.height='1px';
+    frame.style.inset='0 auto auto 0';
+    frame.style.border='0';
+    frame.style.opacity='0';
+    frame.style.pointerEvents='none';
+    document.body.appendChild(frame);
+
+    const frameDocument=frame.contentDocument||frame.contentWindow.document;
+    frameDocument.open();
+    frameDocument.write(buildPrintableReportHtml(model).replace(
+      /<script>window\.addEventListener\('load',[\s\S]*?<\/script>/,
+      ''
+    ));
+    frameDocument.close();
+
+    const printReport=()=>{
+      try{
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+      }catch(error){
+        console.error('PDF export error:',error);
+        alert(tr('exportError'));
+      }finally{
+        button.disabled=false;
+        label.textContent=original;
+        setTimeout(()=>frame.remove(),1500);
+      }
+    };
+
+    if(frameDocument.readyState==='complete')setTimeout(printReport,250);
+    else frame.onload=()=>setTimeout(printReport,250);
+  }catch(error){
+    console.error('PDF export error:',error);
+    button.disabled=false;
+    label.textContent=original;
+    alert(tr('exportError'));
+  }
 }
 
-function wordTextParagraph(text,{bold=false,size=20,color='1F2A1F',alignRight=false,spacingAfter=80}={}){
-  const {Paragraph,TextRun,AlignmentType}=window.docx;
-  return new Paragraph({
-    alignment:alignRight?AlignmentType.RIGHT:AlignmentType.LEFT,
-    bidirectional:LANG==='ar',
-    spacing:{after:spacingAfter},
-    children:[new TextRun({text:String(text),bold,size,color,font:'Arial',rightToLeft:LANG==='ar'})]
-  });
+function escapeXml(value){
+  return String(value??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&apos;');
 }
 
-function wordTable(rows,headerFill='F3F7F1'){
-  const {Table,TableRow,TableCell,Paragraph,TextRun,WidthType,BorderStyle,AlignmentType,TableLayoutType,VerticalAlign}=window.docx;
-  const borders={top:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},bottom:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},left:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},right:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},insideHorizontal:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},insideVertical:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'}};
-  const cellParagraph=(text,bold,color)=>new Paragraph({
-    alignment:LANG==='ar'?AlignmentType.RIGHT:AlignmentType.LEFT,
-    bidirectional:LANG==='ar',
-    spacing:{before:30,after:30},
-    children:[new TextRun({text:String(text),bold,size:19,color,font:'Arial',rightToLeft:LANG==='ar'})]
-  });
-  return new Table({
-    width:{size:100,type:WidthType.PERCENTAGE},
-    layout:TableLayoutType.FIXED,
-    borders,
-    rows:rows.map(([label,value])=>new TableRow({children:[
-      new TableCell({width:{size:42,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,shading:{fill:headerFill},margins:{top:90,bottom:90,left:110,right:110},children:[cellParagraph(label,true,'5A6B5A')]}),
-      new TableCell({width:{size:58,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,margins:{top:90,bottom:90,left:110,right:110},children:[cellParagraph(value,true,'1F2A1F')]})
-    ]}))
-  });
+function wordRunXml(text,{bold=false,size=22,color='1F2A1F',rtl=false}={}){
+  return `<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>${bold?'<w:b/>':''}${rtl?'<w:rtl/>':''}<w:color w:val="${color}"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/></w:rPr><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`;
+}
+
+function wordParagraphXml(text,{bold=false,size=22,color='1F2A1F',align='left',rtl=false,before=0,after=100,shading='',borderColor=''}={}){
+  const bidi=rtl?'<w:bidi/>':'';
+  const shade=shading?`<w:shd w:val="clear" w:color="auto" w:fill="${shading}"/>`:'';
+  const border=borderColor?`<w:pBdr>${rtl?`<w:right w:val="single" w:sz="12" w:space="5" w:color="${borderColor}"/>`:`<w:left w:val="single" w:sz="12" w:space="5" w:color="${borderColor}"/>`}</w:pBdr>`:'';
+  return `<w:p><w:pPr>${bidi}<w:jc w:val="${align}"/><w:spacing w:before="${before}" w:after="${after}"/>${shade}${border}</w:pPr>${wordRunXml(text,{bold,size,color,rtl})}</w:p>`;
+}
+
+function wordCellXml(text,{fill='FFFFFF',bold=false,color='1F2A1F',rtl=false,width=5000}={}){
+  const align=rtl?'right':'left';
+  return `<w:tc><w:tcPr><w:tcW w:w="${width}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${fill}"/><w:tcMar><w:top w:w="100" w:type="dxa"/><w:left w:w="120" w:type="dxa"/><w:bottom w:w="100" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraphXml(text,{bold,size:20,color,align,rtl,after:0})}</w:tc>`;
+}
+
+function wordTableXml(rows,{rtl=false}={}){
+  const tableRows=rows.map(([label,value])=>`<w:tr>${wordCellXml(label,{fill:'F3F7F1',bold:true,color:'5A6B5A',rtl,width:4200})}${wordCellXml(value,{fill:'FFFFFF',bold:true,color:'1F2A1F',rtl,width:5800})}</w:tr>`).join('');
+  return `<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="DDE7DA"/><w:left w:val="single" w:sz="4" w:color="DDE7DA"/><w:bottom w:val="single" w:sz="4" w:color="DDE7DA"/><w:right w:val="single" w:sz="4" w:color="DDE7DA"/><w:insideH w:val="single" w:sz="4" w:color="DDE7DA"/><w:insideV w:val="single" w:sz="4" w:color="DDE7DA"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="4200"/><w:gridCol w:w="5800"/></w:tblGrid>${tableRows}</w:tbl>`;
+}
+
+function wordSectionTitleXml(text,{rtl=false}={}){
+  return wordParagraphXml(text,{bold:true,size:28,color:'0A3A1E',align:rtl?'right':'left',rtl,before:240,after:100,borderColor:'C8A24B'});
+}
+
+function buildWordDocumentXml(model){
+  const rtl=model.dir==='rtl';
+  const align=rtl?'right':'left';
+  const reasons=(model.reasons.length?model.reasons:[{text:'—',level:''}]).map(item=>{
+    const color=item.level==='risk'?'B54141':item.level==='good'?'1E7B3C':item.level==='mid'?'B88922':'4F82AD';
+    return wordParagraphXml(`• ${item.text}`,{size:20,color:'1F2A1F',align,rtl,after:95,shading:'FBFDF9',borderColor:color});
+  }).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:xml="http://www.w3.org/XML/1998/namespace"><w:body>
+<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="10000"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="10000" w:type="dxa"/><w:shd w:val="clear" w:fill="0A3A1E"/><w:tcMar><w:top w:w="240" w:type="dxa"/><w:left w:w="260" w:type="dxa"/><w:bottom w:w="240" w:type="dxa"/><w:right w:w="260" w:type="dxa"/></w:tcMar></w:tcPr>
+${wordParagraphXml('AGRIFIN AI',{bold:true,size:21,color:'E0BE6A',align,rtl,after:55})}
+${wordParagraphXml(model.l.title,{bold:true,size:36,color:'FFFFFF',align,rtl,after:55})}
+${wordParagraphXml(model.l.subtitle,{size:20,color:'E8F0E6',align,rtl,after:0})}
+</w:tc></w:tr></w:tbl>
+${wordParagraphXml(`${model.l.generated}: ${model.generatedAt}`,{size:18,color:'5A6B5A',align,rtl,before:100,after:140})}
+${wordSectionTitleXml(model.l.summary,{rtl})}
+<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="DDE7DA"/><w:left w:val="single" w:sz="4" w:color="DDE7DA"/><w:bottom w:val="single" w:sz="4" w:color="DDE7DA"/><w:right w:val="single" w:sz="4" w:color="DDE7DA"/><w:insideV w:val="single" w:sz="4" w:color="DDE7DA"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="3200"/><w:gridCol w:w="6800"/></w:tblGrid><w:tr>
+<w:tc><w:tcPr><w:tcW w:w="3200" w:type="dxa"/><w:shd w:val="clear" w:fill="FBFDF9"/><w:vAlign w:val="center"/></w:tcPr>${wordParagraphXml(model.score,{bold:true,size:56,color:model.riskColor,align:'center',rtl,after:40})}${wordParagraphXml('/ 100',{size:18,color:'5A6B5A',align:'center',rtl,after:0})}</w:tc>
+<w:tc><w:tcPr><w:tcW w:w="6800" w:type="dxa"/><w:vAlign w:val="center"/><w:tcMar><w:top w:w="170" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:bottom w:w="170" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraphXml(model.riskLabel,{bold:true,size:23,color:model.riskColor,align,rtl,after:65})}${wordParagraphXml(model.summaryRows[2][1],{bold:true,size:34,color:'0F6B33',align,rtl,after:45})}${wordParagraphXml(`${model.l.recommended} · ${model.l.risk}: ${model.riskLabel}`,{size:18,color:'5A6B5A',align,rtl,after:0})}</w:tc>
+</w:tr></w:tbl>
+${wordParagraphXml('',{size:8,after:70})}
+${wordTableXml(model.summaryRows,{rtl})}
+${wordSectionTitleXml(model.l.application,{rtl})}
+${wordTableXml(model.applicationRows,{rtl})}
+${wordSectionTitleXml(model.l.logic,{rtl})}
+${wordTableXml(model.logicRows,{rtl})}
+${wordSectionTitleXml(model.l.repayment,{rtl})}
+<w:tbl><w:tblPr><w:tblW w:w="10000" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="CFE2CD"/><w:left w:val="single" w:sz="4" w:color="CFE2CD"/><w:bottom w:val="single" w:sz="4" w:color="CFE2CD"/><w:right w:val="single" w:sz="4" w:color="CFE2CD"/></w:tblBorders></w:tblPr><w:tr><w:tc><w:tcPr><w:shd w:val="clear" w:fill="EDF6EB"/><w:tcMar><w:top w:w="150" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:bottom w:w="150" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tcMar></w:tcPr>${wordParagraphXml(model.l.repayment,{bold:true,size:18,color:'5A6B5A',align,rtl,after:55})}${wordParagraphXml(model.repayment,{bold:true,size:28,color:'0A3A1E',align,rtl,after:0})}</w:tc></w:tr></w:tbl>
+${wordSectionTitleXml(model.l.reasons,{rtl})}
+${reasons}
+${wordParagraphXml(model.l.disclaimer,{size:16,color:'6B776A',align,rtl,before:200,after:0})}
+<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>
+</w:body></w:document>`;
+}
+
+function crc32(bytes){
+  if(!crc32.table){
+    crc32.table=Array.from({length:256},(_,n)=>{
+      let c=n;
+      for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+      return c>>>0;
+    });
+  }
+  let crc=0xFFFFFFFF;
+  for(const byte of bytes)crc=crc32.table[(crc^byte)&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+
+function zipDosDateTime(date=new Date()){
+  const year=Math.max(1980,date.getFullYear());
+  const time=(date.getHours()<<11)|(date.getMinutes()<<5)|(date.getSeconds()>>1);
+  const day=((year-1980)<<9)|((date.getMonth()+1)<<5)|date.getDate();
+  return {time,day};
+}
+
+function concatBytes(parts){
+  const total=parts.reduce((sum,part)=>sum+part.length,0);
+  const output=new Uint8Array(total);
+  let offset=0;
+  for(const part of parts){output.set(part,offset);offset+=part.length;}
+  return output;
+}
+
+function createStoredZip(files){
+  const encoder=new TextEncoder();
+  const localParts=[];
+  const centralParts=[];
+  let offset=0;
+  const {time,day}=zipDosDateTime();
+
+  for(const file of files){
+    const nameBytes=encoder.encode(file.name);
+    const dataBytes=typeof file.data==='string'?encoder.encode(file.data):file.data;
+    const crc=crc32(dataBytes);
+
+    const local=new Uint8Array(30+nameBytes.length);
+    const lv=new DataView(local.buffer);
+    lv.setUint32(0,0x04034B50,true);
+    lv.setUint16(4,20,true);
+    lv.setUint16(6,0x0800,true);
+    lv.setUint16(8,0,true);
+    lv.setUint16(10,time,true);
+    lv.setUint16(12,day,true);
+    lv.setUint32(14,crc,true);
+    lv.setUint32(18,dataBytes.length,true);
+    lv.setUint32(22,dataBytes.length,true);
+    lv.setUint16(26,nameBytes.length,true);
+    lv.setUint16(28,0,true);
+    local.set(nameBytes,30);
+    localParts.push(local,dataBytes);
+
+    const central=new Uint8Array(46+nameBytes.length);
+    const cv=new DataView(central.buffer);
+    cv.setUint32(0,0x02014B50,true);
+    cv.setUint16(4,20,true);
+    cv.setUint16(6,20,true);
+    cv.setUint16(8,0x0800,true);
+    cv.setUint16(10,0,true);
+    cv.setUint16(12,time,true);
+    cv.setUint16(14,day,true);
+    cv.setUint32(16,crc,true);
+    cv.setUint32(20,dataBytes.length,true);
+    cv.setUint32(24,dataBytes.length,true);
+    cv.setUint16(28,nameBytes.length,true);
+    cv.setUint16(30,0,true);
+    cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true);
+    cv.setUint16(36,0,true);
+    cv.setUint32(38,0,true);
+    cv.setUint32(42,offset,true);
+    central.set(nameBytes,46);
+    centralParts.push(central);
+
+    offset+=local.length+dataBytes.length;
+  }
+
+  const centralBytes=concatBytes(centralParts);
+  const end=new Uint8Array(22);
+  const ev=new DataView(end.buffer);
+  ev.setUint32(0,0x06054B50,true);
+  ev.setUint16(4,0,true);
+  ev.setUint16(6,0,true);
+  ev.setUint16(8,files.length,true);
+  ev.setUint16(10,files.length,true);
+  ev.setUint32(12,centralBytes.length,true);
+  ev.setUint32(16,offset,true);
+  ev.setUint16(20,0,true);
+
+  return concatBytes([...localParts,centralBytes,end]);
+}
+
+function buildDocxBlob(model){
+  const now=new Date().toISOString();
+  const files=[
+    {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`},
+    {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`},
+    {name:'word/document.xml',data:buildWordDocumentXml(model)},
+    {name:'word/styles.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>`},
+    {name:'docProps/core.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${escapeXml(model.l.title)}</dc:title><dc:creator>AgriFin AI</dc:creator><cp:lastModifiedBy>AgriFin AI</cp:lastModifiedBy><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`},
+    {name:'docProps/app.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><Application>AgriFin AI</Application><AppVersion>1.0</AppVersion></Properties>`}
+  ];
+  return new Blob([createStoredZip(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
 }
 
 async function exportReportWord(){
@@ -982,71 +1183,7 @@ async function exportReportWord(){
   try{
     button.disabled=true;
     label.textContent=tr('exportWordWorking');
-    if(!window.docx)throw new Error('DOCX library is unavailable');
-    const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,ShadingType,VerticalAlign,PageOrientation}=window.docx;
-    const align=LANG==='ar'?AlignmentType.RIGHT:AlignmentType.LEFT;
-    const sectionTitle=text=>new Paragraph({
-      alignment:align,bidirectional:LANG==='ar',spacing:{before:220,after:100},
-      border:{left:LANG==='ar'?undefined:{style:BorderStyle.SINGLE,size:16,color:'C8A24B'},right:LANG==='ar'?{style:BorderStyle.SINGLE,size:16,color:'C8A24B'}:undefined},
-      children:[new TextRun({text,bold:true,size:27,color:'0A3A1E',font:'Arial',rightToLeft:LANG==='ar'})]
-    });
-    const headerTable=new Table({
-      width:{size:100,type:WidthType.PERCENTAGE},
-      borders:{top:{style:BorderStyle.NIL},bottom:{style:BorderStyle.NIL},left:{style:BorderStyle.NIL},right:{style:BorderStyle.NIL},insideHorizontal:{style:BorderStyle.NIL},insideVertical:{style:BorderStyle.NIL}},
-      rows:[new TableRow({children:[new TableCell({
-        shading:{fill:'0A3A1E',type:ShadingType.CLEAR},verticalAlign:VerticalAlign.CENTER,
-        margins:{top:220,bottom:220,left:240,right:240},
-        children:[
-          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:50},children:[new TextRun({text:'AGRIFIN AI',bold:true,size:20,color:'E0BE6A',font:'Arial'})]}),
-          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:55},children:[new TextRun({text:model.l.title,bold:true,size:34,color:'FFFFFF',font:'Arial',rightToLeft:LANG==='ar'})]}),
-          new Paragraph({alignment:align,bidirectional:LANG==='ar',children:[new TextRun({text:model.l.subtitle,size:19,color:'E8F0E6',font:'Arial',rightToLeft:LANG==='ar'})]})
-        ]
-      })]})]
-    });
-    const scoreTable=new Table({
-      width:{size:100,type:WidthType.PERCENTAGE},
-      borders:{top:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},bottom:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},left:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},right:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'},insideHorizontal:{style:BorderStyle.NIL},insideVertical:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'}},
-      rows:[new TableRow({children:[
-        new TableCell({width:{size:32,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,shading:{fill:'FBFDF9'},margins:{top:170,bottom:170,left:120,right:120},children:[
-          new Paragraph({alignment:AlignmentType.CENTER,bidirectional:LANG==='ar',spacing:{after:40},children:[new TextRun({text:model.score,bold:true,size:54,color:model.riskColor,font:'Arial'})]}),
-          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:'/ 100',size:18,color:'5A6B5A',font:'Arial'})]})
-        ]}),
-        new TableCell({width:{size:68,type:WidthType.PERCENTAGE},verticalAlign:VerticalAlign.CENTER,margins:{top:170,bottom:170,left:170,right:170},children:[
-          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:65},children:[new TextRun({text:model.riskLabel,bold:true,size:22,color:model.riskColor,font:'Arial',rightToLeft:LANG==='ar'})]}),
-          new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{after:45},children:[new TextRun({text:model.summaryRows[2][1],bold:true,size:34,color:'0F6B33',font:'Arial',rightToLeft:LANG==='ar'})]}),
-          new Paragraph({alignment:align,bidirectional:LANG==='ar',children:[new TextRun({text:`${model.l.recommended} · ${model.l.risk}: ${model.riskLabel}`,size:18,color:'5A6B5A',font:'Arial',rightToLeft:LANG==='ar'})]})
-        ]})
-      ]})]
-    });
-    const repaymentTable=new Table({
-      width:{size:100,type:WidthType.PERCENTAGE},
-      borders:{top:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},bottom:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},left:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},right:{style:BorderStyle.SINGLE,size:1,color:'CFE2CD'},insideHorizontal:{style:BorderStyle.NIL},insideVertical:{style:BorderStyle.NIL}},
-      rows:[new TableRow({children:[new TableCell({shading:{fill:'EDF6EB'},margins:{top:150,bottom:150,left:170,right:170},children:[
-        wordTextParagraph(model.l.repayment,{bold:true,size:18,color:'5A6B5A',alignRight:LANG==='ar',spacingAfter:55}),
-        wordTextParagraph(model.repayment,{bold:true,size:27,color:'0A3A1E',alignRight:LANG==='ar',spacingAfter:0})
-      ]})]})]
-    });
-    const reasonParagraphs=(model.reasons.length?model.reasons:[{text:'—',level:''}]).map(item=>new Paragraph({
-      alignment:align,bidirectional:LANG==='ar',spacing:{after:90},indent:{left:180,right:LANG==='ar'?180:0},
-      border:{left:LANG==='ar'?undefined:{style:BorderStyle.SINGLE,size:12,color:item.level==='risk'?'B54141':item.level==='good'?'1E7B3C':'4F82AD'},right:LANG==='ar'?{style:BorderStyle.SINGLE,size:12,color:item.level==='risk'?'B54141':item.level==='good'?'1E7B3C':'4F82AD'}:undefined},
-      shading:{fill:'FBFDF9'},
-      children:[new TextRun({text:`• ${item.text}`,size:19,color:'1F2A1F',font:'Arial',rightToLeft:LANG==='ar'})]
-    }));
-    const children=[
-      headerTable,
-      wordTextParagraph(`${model.l.generated}: ${model.generatedAt}`,{size:17,color:'5A6B5A',alignRight:LANG==='ar',spacingAfter:140}),
-      sectionTitle(model.l.summary),scoreTable,new Paragraph({spacing:{after:80}}),wordTable(model.summaryRows),
-      sectionTitle(model.l.application),wordTable(model.applicationRows),
-      sectionTitle(model.l.logic),wordTable(model.logicRows),
-      sectionTitle(model.l.repayment),repaymentTable,
-      sectionTitle(model.l.reasons),...reasonParagraphs,
-      new Paragraph({alignment:align,bidirectional:LANG==='ar',spacing:{before:180},border:{top:{style:BorderStyle.SINGLE,size:1,color:'DDE7DA'}},children:[new TextRun({text:model.l.disclaimer,size:15,color:'6B776A',font:'Arial',rightToLeft:LANG==='ar'})]})
-    ];
-    const documentFile=new Document({
-      styles:{default:{document:{run:{font:'Arial',size:20,color:'1F2A1F'},paragraph:{spacing:{line:300}}}}},
-      sections:[{properties:{page:{size:{orientation:PageOrientation.PORTRAIT},margin:{top:720,right:720,bottom:720,left:720}}},children}]
-    });
-    const blob=await Packer.toBlob(documentFile);
+    const blob=buildDocxBlob(model);
     const url=URL.createObjectURL(blob);
     const link=document.createElement('a');
     link.href=url;
@@ -1054,7 +1191,7 @@ async function exportReportWord(){
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
   }catch(error){
     console.error('Word export error:',error);
     alert(tr('exportError'));
@@ -1067,7 +1204,10 @@ async function exportReportWord(){
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
 document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.l)));
 $('loanForm').addEventListener('submit',submitAssessment);$('exampleBtn').addEventListener('click',loadExample);
-$('exportPdfBtn').addEventListener('click',exportReportPdf);$('exportWordBtn').addEventListener('click',exportReportWord);
+const exportPdfButton=$('exportPdfBtn');
+const exportWordButton=$('exportWordBtn');
+if(exportPdfButton)exportPdfButton.addEventListener('click',exportReportPdf);
+if(exportWordButton)exportWordButton.addEventListener('click',exportReportWord);
 const params=new URLSearchParams(location.search);THEME=params.get('theme')||localStorage.getItem(THEME_KEY)||'light';LANG=params.get('lang')||localStorage.getItem(LANG_KEY)||'en';
 populateSelects();setTheme(THEME,false);setLanguage(LANG,false);
 </script>
