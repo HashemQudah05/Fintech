@@ -467,8 +467,8 @@ def build_word_report(payload: Dict[str, Any], result: Dict[str, Any]) -> bytes:
     ]
     decision_rows = [
         [labels["field"], labels["value"]],
-        [labels["risk"], f'{result.get("risk_score", 0)}/100 — {result.get("risk_class_label", result.get("risk_class", ""))}'],
-        [labels["recommended"], money_report(result.get("recommended_loan_jod"))],
+        [labels["risk"], f'{result.get("risk_score_min", result.get("risk_score", 0)):.0f}-{result.get("risk_score_max", result.get("risk_score", 0)):.0f}/100 — {result.get("risk_class_label", result.get("risk_class", ""))}'],
+        [labels["recommended"], f'{money_report(result.get("recommended_loan_min_jod", result.get("recommended_loan_jod")))} - {money_report(result.get("recommended_loan_max_jod", result.get("recommended_loan_jod")))}'],
         [labels["eligible"], money_report(result.get("max_eligible_financing_jod"))],
         [labels["cost"], money_report(result.get("estimated_project_cost_jod"))],
         [labels["route"], result.get("approval_route", "—")],
@@ -585,6 +585,39 @@ def risk_class_from_score(score: float) -> str:
 
 def safe_round_50(x: float) -> float:
     return float(np.round(float(x) / 50) * 50)
+
+
+def build_risk_score_range(score: float) -> tuple[float, float]:
+    """Create a compact five-point display range around the model score."""
+    center = float(np.clip(score, 0, 100))
+    lower = max(0.0, math.floor(center - 2.5))
+    upper = min(100.0, math.ceil(center + 2.5))
+    if upper <= lower:
+        upper = min(100.0, lower + 1.0)
+    return float(lower), float(upper)
+
+
+def build_recommended_loan_range(
+    recommended_loan: float,
+    requested_loan: float,
+    max_eligible_financing: float,
+) -> tuple[float, float]:
+    """Create a ±5% display range, rounded to JOD 50 and kept within financing limits."""
+    center = max(float(recommended_loan), 0.0)
+    if center <= 0:
+        return 0.0, 0.0
+
+    lower = safe_round_50(center * 0.95)
+    upper = safe_round_50(center * 1.05)
+    financing_cap = max(0.0, min(float(requested_loan), float(max_eligible_financing)))
+    upper = min(upper, financing_cap) if financing_cap > 0 else upper
+    lower = min(lower, center)
+    upper = max(upper, center)
+
+    if upper <= lower:
+        lower = max(0.0, safe_round_50(center - 50))
+        upper = center
+    return float(lower), float(upper)
 
 
 def landholding_category(area: float) -> str:
@@ -738,9 +771,23 @@ def money_text(value: float, lang: str = "en") -> str:
     return f"د.أ {value:,}" if lang == "ar" else f"JD {value:,}"
 
 
-def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, recommended_loan: float, lang: str = "en") -> List[Dict[str, str]]:
+def generate_risk_reasons(
+    row: pd.Series,
+    risk_score: float,
+    risk_class: str,
+    recommended_loan: float,
+    lang: str = "en",
+    risk_score_min: float | None = None,
+    risk_score_max: float | None = None,
+    recommended_loan_min: float | None = None,
+    recommended_loan_max: float | None = None,
+) -> List[Dict[str, str]]:
     lang = "ar" if lang == "ar" else "en"
     reasons: List[Dict[str, str]] = []
+    risk_score_min = risk_score if risk_score_min is None else risk_score_min
+    risk_score_max = risk_score if risk_score_max is None else risk_score_max
+    recommended_loan_min = recommended_loan if recommended_loan_min is None else recommended_loan_min
+    recommended_loan_max = recommended_loan if recommended_loan_max is None else recommended_loan_max
     water = row.get("water_availability")
     irr = row.get("irrigation_type")
     over_ratio = float(row.get("overfinancing_ratio", 0))
@@ -787,7 +834,7 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
 
         reasons.append({
             "level": "final",
-            "text": f"الخلاصة: دعم القرار النهائي: {RISK_LABELS['ar'][risk_class]}، القرض المقترح {money_text(recommended_loan, 'ar')}، درجة المخاطر {risk_score:.0f}/100.",
+            "text": f"الخلاصة: دعم القرار النهائي: {RISK_LABELS['ar'][risk_class]}، نطاق القرض المقترح {money_text(recommended_loan_min, 'ar')} - {money_text(recommended_loan_max, 'ar')}، ونطاق درجة المخاطر {risk_score_min:.0f}-{risk_score_max:.0f}/100.",
         })
         return reasons
 
@@ -832,7 +879,7 @@ def generate_risk_reasons(row: pd.Series, risk_score: float, risk_class: str, re
 
     reasons.append({
         "level": "final",
-        "text": f"Final decision support: {RISK_LABELS['en'][risk_class]}, recommended loan {money_text(recommended_loan, 'en')}, risk score {risk_score:.0f}/100.",
+        "text": f"Final decision support: {RISK_LABELS['en'][risk_class]}, recommended loan range {money_text(recommended_loan_min, 'en')} - {money_text(recommended_loan_max, 'en')}, risk score range {risk_score_min:.0f}-{risk_score_max:.0f}/100.",
     })
     return reasons
 
@@ -849,18 +896,39 @@ def predict_application(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     risk_class_final = risk_class_from_score(risk_score_pred)
     recommended_final = rule_based_recommendation(row, risk_score_pred)
+    risk_score_min, risk_score_max = build_risk_score_range(risk_score_pred)
+    recommended_loan_min, recommended_loan_max = build_recommended_loan_range(
+        recommended_final,
+        float(row["requested_loan_jod"]),
+        float(row["max_eligible_financing_jod"]),
+    )
     route_key = application["approval_authority"]
     repayment_key = application["repayment_frequency"]
 
-    reasons = generate_risk_reasons(row, risk_score_pred, risk_class_final, recommended_final, lang)
+    reasons = generate_risk_reasons(
+        row,
+        risk_score_pred,
+        risk_class_final,
+        recommended_final,
+        lang,
+        risk_score_min=risk_score_min,
+        risk_score_max=risk_score_max,
+        recommended_loan_min=recommended_loan_min,
+        recommended_loan_max=recommended_loan_max,
+    )
     explanation = " ".join([r["text"] for r in reasons])
     repayment_schedule = build_repayment_schedule(payload, application, recommended_final, lang)
 
     return {
         "risk_score": risk_score_clean,
+        "risk_score_min": risk_score_min,
+        "risk_score_max": risk_score_max,
+        "risk_score_range": f"{risk_score_min:.0f}-{risk_score_max:.0f}",
         "risk_class": risk_class_final,
         "risk_class_label": RISK_LABELS[lang][risk_class_final],
         "recommended_loan_jod": recommended_final,
+        "recommended_loan_min_jod": recommended_loan_min,
+        "recommended_loan_max_jod": recommended_loan_max,
         "estimated_project_cost_jod": float(row["estimated_project_cost_jod"]),
         "max_eligible_financing_jod": float(row["max_eligible_financing_jod"]),
         "cost_per_unit_jod": float(row["cost_per_unit_jod"]),
