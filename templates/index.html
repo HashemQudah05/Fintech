@@ -558,10 +558,10 @@ function localChatAnswer(question){
 
   if(includesAny(q,['درجه المخاطر','درجة المخاطر','risk score','risk degree'])){
     if(data){
-      const score=Number(data.risk_score)||0;
+      const scoreRange=riskRangeText(data);
       return chatText(
-        `The risk score is ${score.toFixed(1).replace('.0','')} out of 100. A lower score means lower estimated risk: below 40 is low risk, 40 to below 70 is medium risk, and 70 or more is high risk. This is decision support, not the final institutional decision.`,
-        `درجة المخاطر الحالية هي ${score.toFixed(1).replace('.0','')} من 100. كلما انخفضت الدرجة كانت المخاطر المقدرة أقل: أقل من 40 مخاطر منخفضة، ومن 40 إلى أقل من 70 مخاطر متوسطة، و70 فأعلى مخاطر مرتفعة. النتيجة أداة مساندة وليست القرار المؤسسي النهائي.`
+        `The current risk score range is ${scoreRange} out of 100. A lower range means lower estimated risk: below 40 is low risk, 40 to below 70 is medium risk, and 70 or more is high risk. This is decision support, not the final institutional decision.`,
+        `نطاق درجة المخاطر الحالي هو ${scoreRange} من 100. كلما انخفض النطاق كانت المخاطر المقدرة أقل: أقل من 40 مخاطر منخفضة، ومن 40 إلى أقل من 70 مخاطر متوسطة، و70 فأعلى مخاطر مرتفعة. النتيجة أداة مساندة وليست القرار المؤسسي النهائي.`
       );
     }
     return chatText(
@@ -623,12 +623,12 @@ function localChatAnswer(question){
     if(data){
       const requested=Number(data.requested_loan_jod)||0;
       const cost=Number(data.estimated_project_cost_jod)||0;
-      const recommended=Number(data.recommended_loan_jod)||0;
       const score=Number(data.risk_score)||0;
       const factor=score<40?'100%':score<70?'90%':'70%';
+      const range=loanRangeValues(data);
       return chatText(
-        `The recommended loan starts from the lower of the requested amount (${chatMoney(requested)}) and the estimated project cost (${chatMoney(cost)}), then applies the ${factor} risk adjustment. The current recommendation is ${chatMoney(recommended)}.`,
-        `يبدأ احتساب القرض المقترح من المبلغ الأقل بين القرض المطلوب (${chatMoney(requested)}) وتكلفة المشروع المقدرة (${chatMoney(cost)})، ثم يُطبق معامل المخاطر بنسبة ${factor}. التوصية الحالية هي ${chatMoney(recommended)}.`
+        `The recommended loan starts from the lower of the requested amount (${chatMoney(requested)}) and the estimated project cost (${chatMoney(cost)}), then applies the ${factor} risk adjustment. The current recommended range is ${chatMoney(range.low)} - ${chatMoney(range.high)}.`,
+        `يبدأ احتساب القرض المقترح من المبلغ الأقل بين القرض المطلوب (${chatMoney(requested)}) وتكلفة المشروع المقدرة (${chatMoney(cost)})، ثم يُطبق معامل المخاطر بنسبة ${factor}. نطاق القرض المقترح حاليًا هو ${chatMoney(range.low)} - ${chatMoney(range.high)}.`
       );
     }
     return chatText(
@@ -745,6 +745,25 @@ function setLanguage(lang,persist=true){LANG=lang==='ar'?'ar':'en';document.body
 function applyTranslations(){Object.keys(T).forEach(key=>{const el=$(key);if(el)el.textContent=tr(key)});$('dashboardLink').title=tr('dashboardTitle');$('heroDashboardLink').title=tr('dashboardTitle');if(LAST_REPAYMENT_PLAN)showRepaymentSchedule(LAST_REPAYMENT_PLAN)}
 function populateSelects(){const current=id=>$(id).value;const keep={governorate:current('governorate'),projectType:current('projectType'),cropActivity:current('cropActivity'),irrigationType:current('irrigationType'),waterAvailability:current('waterAvailability'),firstTime:current('firstTime'),financingMethod:current('financingMethod')};fillSelect('governorate',DATA.governorates,keep.governorate||'Ajloun');fillSelect('projectType',DATA.projects,keep.projectType||'Olives / Fruit Trees');fillSelect('cropActivity',DATA.crops,keep.cropActivity||'Olives');fillSelect('irrigationType',DATA.irrigation,keep.irrigationType||'Drip');fillSelect('waterAvailability',DATA.water,keep.waterAvailability||'High');fillSelect('firstTime',DATA.yesNo,keep.firstTime||'No');fillSelect('financingMethod',DATA.financing,keep.financingMethod||'فائدة')}
 function money(v){const n=Math.round(Number(v)||0).toLocaleString(LANG==='ar'?'ar-JO':'en-US');return LANG==='ar'?`${n} د.أ`:`JD ${n}`}
+function riskRangeText(data){
+  const low=Number(data.risk_score_min??data.risk_score)||0;
+  const high=Number(data.risk_score_max??data.risk_score)||0;
+  const format=n=>n.toFixed(1).replace('.0','');
+  return `${format(low)}–${format(high)}`;
+}
+function loanRangeValues(data){
+  const center=Number(data.recommended_loan_jod)||0;
+  const fallbackLow=Math.max(0,Math.round((center*.95)/50)*50);
+  const fallbackHigh=Math.max(center,Math.round((center*1.05)/50)*50);
+  return {
+    low:Number(data.recommended_loan_min_jod??fallbackLow)||0,
+    high:Number(data.recommended_loan_max_jod??fallbackHigh)||0
+  };
+}
+function loanRangeText(data){
+  const range=loanRangeValues(data);
+  return `${money(range.low)} – ${money(range.high)}`;
+}
 
 function money2(v){
   const n=Number(v)||0;
@@ -834,7 +853,7 @@ function getReportModel(){
   return {
     title:LANG==='ar'?'تقرير تقييم طلب التمويل الزراعي':'Agricultural Loan Assessment Report',
     application:[[tr('lGovernorate'),currentFieldValue('governorate')],[tr('lProject'),currentFieldValue('projectType')],[tr('lCrop'),currentFieldValue('cropActivity')],[tr('lIrrigation'),currentFieldValue('irrigationType')],[tr('lWater'),currentFieldValue('waterAvailability')],[tr('lArea'),currentFieldValue('farmArea')],[tr('lYears'),currentFieldValue('periodYears')],[tr('lRequested'),money2(d.requested_loan_jod)],[tr('lRevenue'),money2(Number($('expectedRevenue').value)||0)],[tr('lMethod'),currentFieldValue('financingMethod')]],
-    result:[[tr('overallRiskL'),`${d.risk_class_label||d.risk_class} — ${Number(d.risk_score||0).toFixed(1)}/100`],[tr('mRecommendedL'),money2(d.recommended_loan_jod)],[tr('mCostL'),money2(d.estimated_project_cost_jod)],[tr('mFlagL'),`${Number(d.overfinancing_ratio||0).toFixed(2)}×`]],
+    result:[[tr('overallRiskL'),`${d.risk_class_label||d.risk_class} — ${riskRangeText(d)}/100`],[tr('mRecommendedL'),loanRangeText(d)],[tr('mCostL'),money2(d.estimated_project_cost_jod)],[tr('mFlagL'),`${Number(d.overfinancing_ratio||0).toFixed(2)}×`]],
     plan:[[tr('rpPlanL'),planField(p,'plan_type')],[tr('rpFrequencyL'),planField(p,'frequency')],[tr('rpGraceL'),Number(p.grace_period_years||0)>0?`${p.grace_period_years} ${tr('yearsText')}`:tr('noGraceText')],[tr('rpCountL'),String(p.number_of_installments||0)],[tr('rpFirstL'),p.first_payment_date||'—'],[tr('rpAmountL'),money2(p.estimated_installment_jod)]],
     basis:planField(p,'basis'),note:tr('principalOnlyNote'),schedule:p.schedule||[],reasons:(d.risk_reasons||[]).map(r=>r.text||'')
   };
@@ -893,20 +912,22 @@ function showResult(data){
   const score=Math.max(0,Math.min(100,Number(data.risk_score)||0));
   const requested=Number(data.requested_loan_jod)||0;
   const recommended=Number(data.recommended_loan_jod)||0;
+  const recommendedRange=loanRangeText(data);
+  const scoreRange=riskRangeText(data);
   const cost=Number(data.estimated_project_cost_jod)||0;
   const gap=Math.max(0,requested-cost);
-  $('riskScore').textContent=score.toFixed(1).replace('.0','');
+  $('riskScore').textContent=scoreRange;
   const cls=(data.risk_class||'Low').toLowerCase();
   const ring=cls==='high'?'var(--bad)':cls==='medium'?'var(--warn)':'var(--good)';
   $('scoreRing').style.setProperty('--score',score);
   $('scoreRing').style.setProperty('--ring',ring);
   $('riskBadge').className='risk-badge '+cls;
   $('riskBadge').textContent=data.risk_class_label||data.risk_class;
-  $('headlineLoan').textContent=money(recommended);
+  $('headlineLoan').textContent=recommendedRange;
   $('decisionSummary').textContent=LANG==='ar'
-    ?`يوصي النموذج بقرض قدره ${money(recommended)} من أصل ${money(requested)} مطلوبة، بعد مقارنة القرض المطلوب بتكلفة المشروع ودرجة المخاطر وعوامل المياه والإيراد وفترة السداد.`
-    :`The model recommends ${money(recommended)} from a requested ${money(requested)}, after comparing the requested amount with project cost, risk score, water, revenue, and repayment period.`;
-  $('mRecommended').textContent=money(recommended);
+    ?`يوصي النموذج بنطاق قرض من ${recommendedRange} من أصل ${money(requested)} مطلوبة، بعد مقارنة القرض المطلوب بتكلفة المشروع ونطاق درجة المخاطر ${scoreRange}/100 وعوامل المياه والإيراد وفترة السداد.`
+    :`The model recommends a loan range of ${recommendedRange} from a requested ${money(requested)}, after comparing the requested amount with project cost, the ${scoreRange}/100 risk range, water, revenue, and repayment period.`;
+  $('mRecommended').textContent=recommendedRange;
   $('mRequested').textContent=money(requested);
   $('mCost').textContent=money(cost);
   const overRatio=Number(data.overfinancing_ratio)||0;
